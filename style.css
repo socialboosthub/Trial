@@ -1,0 +1,1121 @@
+/* Global and Basic Reset */
+
+*,
+
+*::before,
+
+*::after {
+
+    box-sizing: border-box;
+
+}
+
+body, html {
+
+    margin: 0;
+
+    padding: 0;
+
+    font-family: Arial, sans-serif;
+
+}
+
+/* Headings */
+
+h1 {
+
+    text-align: center;
+
+    margin: 20px 0;
+
+    color: green; /* FIXED: text-color → color */
+
+}
+
+#events {
+
+    color: brown;
+
+    text-align: center;
+
+    font-size: 40px;
+
+}
+
+/* Label Style */
+
+label {
+
+    font-weight: bold;
+
+    font-size: 16px;
+
+    margin-bottom: 15px;
+
+    display: block;
+
+}
+
+/* Fieldset and Legend */
+
+fieldset {
+
+    width: 400px;
+
+    padding: 20px;
+
+    border-radius: 15px;
+
+    border: 2px solid #ddd;
+
+    background: #fafafa; /* FIXED broken duplicate fieldset block */
+
+}
+
+legend {
+
+    font-size: 18px;
+
+    font-weight: bold;
+
+}
+
+/* Radio Buttons */
+
+fieldset input[type="radio"] {
+
+    margin-right: 8px;
+
+}
+
+fieldset label {
+
+    display: flex;
+
+    align-items: center;
+
+    margin-right: 15px;
+
+    cursor: pointer;
+
+}
+
+fieldset legend + label {
+
+    display: inline-flex;
+
+}
+
+/* Radio Group */
+
+.radio-group {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 10px;
+
+}
+
+.radio-group label {
+
+    display: flex;
+
+    align-items: center;
+
+    cursor: pointer;
+
+}
+
+.radio-group input[type="radio"] {
+
+    margin-right: 6px;
+
+}
+
+/* Textarea */
+
+textarea {
+
+    padding: 12px 16px;
+
+    width: 250px;
+
+    height: 120px;
+
+    border-radius: 12px;
+
+}
+
+/* Modern Select Styling */
+
+select {
+
+    padding: 12px 16px;
+
+    width: 250px;
+
+    border-radius: 12px;
+
+    background: #f5f5f5;
+
+    border: 2px solid #ddd;
+
+    font-size: 16px;
+
+    outline: none;
+
+    transition: 0.3s;
+
+    cursor: pointer;
+
+    appearance: none;
+
+    background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="20" viewBox="0 0 24 24" width="20" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+
+    background-repeat: no-repeat;
+
+    background-position: right 12px center;
+
+    background-size: 15px;
+
+}
+
+select:hover {
+
+    border-color: #aaa;
+
+}
+
+select:focus {
+
+    border-color: #000;
+
+    background: #eee;
+
+}
+
+/* Slider Container */
+
+.slider {
+
+    position: relative;
+
+    width: 100%;
+
+    max-width: 100%;
+
+    overflow: hidden;
+
+}
+
+/* Slide */
+
+.slide {
+
+    position: absolute;
+
+    width: 100%;
+
+    top: 0;
+
+    left: 0;
+
+    opacity: 0;
+
+    transition: opacity 1s ease-in-out;
+
+}
+
+.slide.active {
+
+    opacity: 1;
+
+    position: relative;
+
+}
+
+/* Images */
+
+.image-container {
+
+    width: 100%;
+
+    height: auto;
+
+    display: block;
+
+}
+
+/* Center Link */
+
+.center-link {
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 50%;
+
+    transform: translate(-50%, -50%);
+
+    color: orange;
+
+    border: 2px solid orange;
+
+    padding: 10px 20px;
+
+    background: white;
+
+    border-radius: 6px;
+
+    text-decoration: none;
+
+    font-size: 20px;
+
+    font-weight: 600;
+
+}
+
+/* Main Nav */
+
+.main-nav {
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 20px;
+
+    margin: 20px 0;
+
+}
+
+.main-nav a {
+
+    text-decoration: none;
+
+    color: #333;
+
+    font-weight: bold;
+
+}
+
+/* Contact Form */
+
+.contact-form {
+
+    display: grid;
+
+    gap: 12px;
+
+    max-width: 700px;
+
+}
+
+.contact-form span {
+
+    display: block;
+
+    font-weight: 600;
+
+    margin-bottom: 6px;
+
+}
+
+.contact-form input,
+
+.contact-form textarea {
+
+    width: 100%;
+
+    padding: 10px;
+
+    border-radius: 5px;
+
+    border: 1px solid #ddd;
+
+    background: #fff;
+
+}
+
+.contact-form input:focus,
+
+.contact-form textarea:focus {
+
+    outline: none;
+
+    border-color: #007bff;
+
+    box-shadow: 0 0 0 4px rgba(31, 122, 140, 0.08);
+
+}
+
+/* Submit Button */
+
+#submitBtn {
+
+    background: #007ff;
+
+    color: white;
+
+    padding: 10px 20px;
+
+    border-radius: 6px;
+
+    border: none;
+
+    cursor: pointer;
+
+}
+
+#submitBtn:hover {
+
+    background: #0056b3;
+
+}
+
+/* Popup Background */
+
+#popup { /* FIXED: class was wrong, HTML uses id="popup" */
+
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    width: 100%;
+
+    height: 100%;
+
+    background: rgba(0, 0, 0, 0.5);
+
+    display: none;
+
+    justify-content: center;
+
+    align-items: center;
+
+    z-index: 9999;
+
+}
+
+/* Popup Content */
+
+.popup-content {
+
+    background: white;
+
+    padding: 25px;
+
+    border-radius: 12px;
+
+    width: 85%;
+
+    max-width: 350px;
+
+    text-align: center;
+
+    animation: popin 0.3s ease;
+
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+
+}
+
+@keyframes popin {
+
+    0% { transform: scale(0.7); opacity: 0; }
+
+    100% { transform: scale(1); opacity: 1; }
+
+}
+
+/* Popup Text */
+
+#popupText {
+
+    display: block;
+
+    font-size: 18px;
+
+    margin-bottom: 20px;
+
+    font-weight: 600;
+
+}
+
+/* Close Button */
+
+#closePopup {
+
+    background: #111;
+
+    color: #fff;
+
+    padding: 10px 20px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    cursor: pointer;
+
+}
+
+#closePopup:hover {
+
+    background: #333;
+
+}
+
+/* Media Query */
+
+@media screen and (max-width: 600px) {
+
+    .center-link {
+
+        font-size: 16px;
+
+        padding: 6px 12px;
+
+    }
+
+}
+
+/* Red class */
+
+.red {
+
+    color: green;
+
+}
+
+
+.contact-form {
+
+    max-width: 600px;
+
+    margin: 0 auto;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 15px;
+
+}
+
+.contact-form fieldset {
+
+    border: 2px solid #ddd;
+
+    border-radius: 10px;
+
+    padding: 15px 20px;
+
+    background: #fafafa;
+
+}
+
+.contact-form legend {
+
+    font-weight: bold;
+
+    font-size: 18px;
+
+    padding: 0 5px;
+
+}
+
+.form-row {
+
+    display: flex;
+
+    flex-direction: column;
+
+    margin-bottom: 10px;
+
+}
+
+.form-row label {
+
+    font-weight: 600;
+
+    margin-bottom: 5px;
+}
+
+.form-row input,
+
+.form-row select {
+
+    padding: 10px 12px;
+
+    border-radius: 6px;
+
+    border: 1px solid #ccc;
+
+    font-size: 16px;
+
+}
+
+.radio-group {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+
+    margin-top: 8px;
+
+}
+
+.radio-group label {
+
+    display: flex;
+
+    align-items: center;
+
+    cursor: pointer;
+
+}
+
+.radio-group input {
+
+    margin-right: 6px;
+
+}
+
+#submitBtn {
+
+    padding: 12px 20px;
+
+    background: green;
+}
+span {
+  display: block;
+  width: 200px;
+} 
+
+/* NAVBAR MAIN */
+
+.navbar {
+
+  width: 100%;
+
+  position: fixed;
+
+  top: 0;
+
+  left: 0;
+
+  padding: 15px 40px;
+
+  background: white;
+
+  backdrop-filter: blur(8px);
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  z-index: 999;
+
+  border-bottom: 1px solid #eee;
+
+}
+
+/* LOGO */
+
+.navbar .logo {
+
+  font-size: 22px;
+
+  font-weight: bold;
+
+  letter-spacing: 1px;
+
+}
+
+/* NAV LINKS */
+
+.nav-links {
+
+  list-style: none;
+
+  display: flex;
+
+  gap: 30px;
+
+}
+
+.nav-links li a {
+
+  text-decoration: none;
+
+  font-size: 16px;
+
+  color: #333;
+
+  padding: 5px 0;
+
+  transition: 0.3s;
+}
+
+.nav-links li a:hover,
+
+.nav-links li a.active {
+
+  color: #ff4da6;
+
+}
+
+/* HAMBURGER ICON - MOBILE */
+
+.hamburger {
+
+  display: none;
+
+  flex-direction: column;
+
+  gap: 5px;
+
+  cursor: pointer;
+
+}
+
+.hamburger span {
+
+  width: 27px;
+
+  height: 3px;
+
+  background: #333;
+
+  transition: 0.3s;
+
+}
+
+/* MOBILE MENU */
+
+@media (max-width: 768px) {
+
+  .nav-links {
+
+    position: fixed;
+
+    top: 66px;
+
+    right: -100%;
+
+    width: 200px;
+
+    height: auto;
+
+    background: pink;
+
+    flex-direction: column;
+
+    padding: 20px;
+
+    gap: 20px;
+
+    transition: 0.3s ease;
+
+    border-left: 1px solid #ddd;
+
+  }
+
+  .nav-links.open {
+
+    right: 0;
+
+  }
+
+  .hamburger {
+
+    display: flex;
+
+  }
+
+}
+
+/* HAMBURGER ANIMATION */
+
+.hamburger.active span:nth-child(1) {
+
+  transform: translateY(8px) rotate(45deg);
+
+}
+
+.hamburger.active span:nth-child(2) {
+
+  opacity: 0;
+
+}
+
+.hamburger.active span:nth-child(3) {
+
+  transform: translateY(-8px) rotate(-45deg);
+
+}
+/* CONTACT AREA */
+
+#contact-area {
+
+  text-align: center;
+
+  padding: 50px 20px;
+
+  background: #062f1f;
+
+  color: white;
+
+}
+
+#contact-area h2 {
+
+  font-size: 32px;
+
+  margin-bottom: 25px;
+
+  font-weight: bold;
+
+}
+
+.contact-icons-new {
+
+  display: flex;
+
+  justify-content: center;
+
+  gap: 20px;
+
+  margin-bottom: 30px;
+
+}
+
+.icon-circle-new {
+
+  width: 70px;
+
+  height: 70px;
+
+  background: #0f6b45;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  transition: transform 0.3s, box-shadow 0.3s;
+
+}
+
+.icon-circle-new img {
+
+  width: 35px;
+
+  height: 35px;
+
+}
+
+.icon-circle-new:hover {
+
+  transform: scale(1.2);
+
+  box-shadow: 0 0 20px rgba(0, 255, 120, 0.7);
+
+  background: #00a86b;
+
+}
+
+/* MAP */
+
+.map-container-new {
+
+  width: 100%;
+
+  max-width: 600px;
+
+  margin: auto;
+
+  border-radius: 15px;
+
+  overflow: hidden;
+
+  box-shadow: 0 0 25px rgba(0, 255, 100, 0.4);
+
+}
+
+.map-container-new iframe {
+
+  width: 100%;
+
+  height: 350px;
+
+  border: none;
+
+}
+
+/* Luxury Rolex Green Background */
+
+#bouquet-section {
+
+  background: linear-gradient(135deg, #0A5C38, #063D27);
+
+  padding: 70px 20px;
+
+  text-align: center;
+
+  color: #fff;
+
+}
+
+.section-title {
+
+  font-size: 44px;
+
+  font-weight: 700;
+
+  margin-bottom: 40px;
+
+  color: #d4af37; /* Gold */
+
+  font-family: 'Playfair Display', serif;
+
+}
+
+.bouquet-grid {
+
+  display: grid;
+
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+
+  gap: 30px;
+
+  max-width: 1100px;
+
+  margin: auto;
+
+}
+
+.bouquet-card {
+
+  background: #ffffff;
+
+  border-radius: 20px;
+
+  overflow: hidden;
+
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+
+  transition: .4s;
+
+  opacity: 0;
+
+  transform: translateY(30px);
+
+}
+
+.bouquet-card:hover {
+
+  transform: translateY(-10px);
+
+}
+
+.bouquet-card img {
+
+  width: 100%;
+
+  height: 380px;
+
+  object-fit: cover;
+
+}
+
+.bouquet-card h3 {
+
+  font-size: 22px;
+
+  color: #0A5C38;
+
+  margin: 15px 0 5px;
+
+  font-family: 'Playfair Display', serif;
+
+}
+
+.price {
+
+  font-size: 20px;
+
+  font-weight: 700;
+
+  color: #d4af37; /* Gold */
+
+  margin-bottom: 10px;
+
+}
+
+.bouquet-card p {
+
+  color: #444;
+
+  font-size: 15px;
+
+  padding: 0 15px;
+
+  margin-bottom: 20px;
+
+}
+
+/* WhatsApp Button */
+
+.btn-whatsapp {
+
+  display: inline-block;
+
+  background: #25D366;
+
+  color: #fff;
+
+  padding: 12px 26px;
+
+  border-radius: 30px;
+
+  font-weight: 700;
+
+  margin-bottom: 20px;
+
+  transition: .3s;
+
+  text-decoration: none;
+
+}
+
+.btn-whatsapp:hover {
+
+  background: #1ebe5d;
+
+  transform: scale(1.07);
+
+}
+
+.slider {
+
+    position: relative;
+
+    width: 100%;
+
+    max-width: 100%;
+
+    overflow: hidden;
+
+}
+
+.slide {
+
+    position: absolute;  /* Make slides overlap */
+
+    top: 0;
+
+    left: 0;
+
+    width: 100%;
+
+    height: 100%;        /* ensure same height */
+
+    opacity: 0;          /* hide inactive slides */
+
+    transition: opacity 1s ease-in-out;
+
+}
+
+.slide.active {
+
+    opacity: 1;
+
+    z-index: 5;          /* show above other slides */
+
+}
+
+.intro-section {
+
+    max-width: 800px;
+
+    margin: 20px auto 40px auto; /* space above and below */
+
+    padding: 20px;
+
+    text-align: center;
+
+    background-color: #d4f5d4; /* light green background to match theme */
+
+    border-radius: 12px;
+
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+
+}
+
+.intro-section p {
+
+    font-size: 18px;
+
+    line-height: 1.6;
+
+    color: #333; /* dark text for readability */
+
+}
+
+.intro-section .brand {
+
+    color: #e91e63; /* pink for your brand name */
+
+    font-weight: bold;
+
+    font-size: 20px;
+
+}
+
+.header {
+
+    display: flex;
+    align-items: center;
+
+    gap: 50px; /* space between logo and text */
+
+    padding: 10px 20px;
+    
+}
+
+.logo {
+
+    width: 100px;  /* small size */
+
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.05); /* 5% opacity white */
+    position: relative;
+    top: -3px;
+    left: -10px;
+}
+
+.site-title {
+
+    font-size: 32px; /* you can adjust */
+
+    margin: 0;
+
+}
+
+                                                                                                                    
+                                                                                                                  
+                                                                                                    
+                                                                                                                 
