@@ -1115,7 +1115,11 @@ span {
 
 }
 /* DESKTOP BOUQUET SECTION (won’t affect mobile) */
+<<<<<<< HEAD
+@media (min-width: 890px) {
+=======
 @media (min-width: 850px) {
+>>>>>>> 31da6756d9f943dd824de131ae958206bfaf7a60
 
 .bouquet-section {
       padding: 100px 50px;     /* more space on desktop */
