@@ -513,7 +513,7 @@ select:focus {
 
     border-radius: 10px;
 
-    padding: 15px 20px;
+    padding: 12px 20px;
 
     background: #fafafa;
 
@@ -1117,5 +1117,5 @@ span {
 /* DESKTOP BOUQUET SECTION (won’t affect mobile) */
 <<<<<<< HEAD
 @media (max-width: 1200px) {
-  
+
                                                                                                                  
