@@ -1115,3 +1115,54 @@ span {
     margin: 0;
 
 }
+/* DESKTOP BOUQUET STYLING */
+@media (min-width: 769px) {
+
+  .bouquet-section {
+      padding: 100px 50px; /* more space around section */
+          text-align: center;
+            }
+
+              .section-title {
+                  font-size: 60px; /* bigger title on desktop */
+                      margin-bottom: 60px;
+                        }
+
+                          .bouquet-grid {
+                              display: grid;
+                                  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); /* bigger cards, 3-4 per row */
+                                      gap: 40px;
+                                          max-width: 1200px;
+                                              margin: auto;
+                                                }
+
+                                                  .bouquet-card {
+                                                      height: auto; /* remove mobile height restriction if any */
+                                                          box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+                                                              transition: transform 0.4s, opacity 0.4s;
+                                                                }
+
+                                                                  .bouquet-card img {
+                                                                      height: 350px; /* adjust height so it looks proportionate */
+                                                                          object-fit: cover;
+                                                                            }
+
+                                                                              .bouquet-card h3 {
+                                                                                  font-size: 26px;
+                                                                                    }
+
+                                                                                      .price {
+                                                                                          font-size: 22px;
+                                                                                            }
+
+                                                                                              .bouquet-card p {
+                                                                                                  font-size: 16px;
+                                                                                                      padding: 0 20px;
+                                                                                                        }
+
+                                                                                                          .btn-whatsapp {
+                                                                                                              padding: 14px 32px;
+                                                                                                                  font-size: 18px;
+                                                                                                                    }
+
+                                                                                                                    }
