@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EggMaster Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ADMIN SECURITY OVERLAY STYLES */
+        #security-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #fff; z-index: 99999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px; text-align: center;
+        }
+        .security-box { width: 100%; max-width: 350px; }
+        .sec-step { display: none; animation: fadeIn 0.3s ease; }
+        .sec-step.active { display: block; }
+        .sec-input {
+            width: 100%; padding: 15px; margin: 15px 0;
+            border: 2px solid #eee; border-radius: 12px; font-size: 16px; outline: none;
+        }
+        .sec-input:focus { border-color: #FFB300; }
+        .sec-btn {
+            background: #0d47a1; color: white; font-weight: bold;
+            width: 100%; padding: 15px; border: none; border-radius: 12px; cursor: pointer;
+        }
+        .error-msg { color: #F44336; font-size: 13px; margin-top: 10px; min-height: 20px; font-weight: 600; }
+        
+        /* DASHBOARD STYLES */
+        .admin-container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        .payment-recorder {
+            background: #fff; border: 2px dashed #4CAF50; padding: 20px;
+            border-radius: 16px; margin-bottom: 20px; display: none; /* Hidden by default */
+        }
+        .payment-recorder h4 { margin-top: 0; color: #2E7D32; }
+        .payment-recorder textarea {
+            width: 100%; height: 80px; padding: 10px; border-radius: 8px;
+            border: 1px solid #ccc; font-family: inherit; font-size: 13px;
+            resize: none;
+        }
+
+        .price-editor { background: #E3F2FD; padding: 20px; border-radius: 16px; margin-bottom: 20px; border: 1px solid #BBDEFB; }
+        .order-card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .order-header { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px; }
+        .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
+        .status-Pending { background: #FFF3E0; color: #E65100; }
+        .status-Delivered { background: #E8F5E9; color: #2E7D32; }
+        .admin-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+        .btn-deliver { background: #4CAF50; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .btn-map { background: #2196F3; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+    </style>
+</head>
+<body>
+
+    <div id="security-overlay">
+        <div class="security-box">
+            <div style="font-size: 50px; color: #0d47a1; margin-bottom: 20px;">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            
+            <div id="step-1" class="sec-step active">
+                <h3>Admin Verification</h3>
+                <p style="color:#666; font-size:14px;">Enter your Gmail</p>
+                <input type="email" id="secEmail" class="sec-input" placeholder="example@gmail.com">
+                <button class="sec-btn" onclick="checkEmail()">Next <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+
+            <div id="step-2" class="sec-step">
+                <h3>Password</h3>
+                <p style="color:#666; font-size:14px;">Enter security password</p>
+                <input type="password" id="secPass" class="sec-input" placeholder="Password">
+                <button class="sec-btn" onclick="checkPass()">Next <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+
+            <div id="step-3" class="sec-step">
+                <h3>Secret Code</h3>
+                <p style="color:#666; font-size:14px;">Enter the final pin</p>
+                <input type="number" id="secCode" class="sec-input" placeholder="000000">
+                <button id="finalLoginBtn" class="sec-btn" onclick="checkCode()">Login As Admin</button>
+            </div>
+
+            <div id="error-display" class="error-msg"></div>
+        </div>
+    </div>
+
+    <div class="admin-container" id="admin-panel" style="display:none;">
+        <div class="admin-header">
+            <h2 id="dashboardTitle">Admin Dashboard</h2>
+            <button onclick="window.logoutAdmin()" style="padding:8px 12px; border:none; background:#ffcdd2; color:#b71c1c; border-radius:8px;">
+                <i class="fa-solid fa-right-from-bracket"></i> Exit
+            </button>
+        </div>
+
+        <div class="payment-recorder" id="manualEntrySection">
+            <h4><i class="fa-solid fa-comment-dollar"></i> Manual M-Pesa Entry</h4>
+            <p style="font-size:12px; color:#555; margin:5px 0;">Backup Method: Paste SMS here if the auto-forwarder fails.</p>
+            <textarea id="mpesaSmsInput" placeholder="Paste SMS here (e.g. UA5KK2UVTQ Confirmed...)"></textarea>
+            <button onclick="parseAndSavePayment()" style="margin-top:10px; width:100%; padding:10px; background:#4CAF50; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">
+                Save Payment
+            </button>
+        </div>
+
+        <div class="price-editor" id="priceEditor">
+            <h4><i class="fa-solid fa-tag"></i> Set Wholesale Price</h4>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <input type="number" id="adminPriceInput" style="padding:10px; border-radius:8px; border:1px solid #ccc; width:100px;">
+                <input type="number" id="adminStockInput" placeholder="Stock" style="padding:10px; border-radius:8px; border:1px solid #ccc; width:100px;">
+
+                <button onclick="updateGlobalPrice()" style="padding:10px 20px; background:#1976D2; color:white; border:none; border-radius:8px; cursor:pointer;">Update Price</button>
+            </div>
+        </div>
+
+        <h3>Incoming Orders</h3>
+        <div id="adminOrdersList">Loading...</div>
+    </div>
+
+
+
+
+<div class="admin-card" style="margin-top: 20px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+    <h3><i class="fa-solid fa-wallet color-green"></i> Wallet Refunds</h3>
+    <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Enter a user's exact User ID to check or refund their wallet balance.</p>
+    
+    <div class="input-group">
+        <input type="text" id="adminUserIdInput" placeholder="Paste User ID here..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
+    </div>
+    
+    <button onclick="window.checkUserWallet()" style="background: #2196F3; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; margin-top: 10px;">Check Wallet</button>
+
+    <div id="adminWalletResult" style="display: none; margin-top: 15px; padding: 15px; background: #f9f9f9; border-radius: 8px; border: 1px dashed #ccc;">
+        <p><strong>Name:</strong> <span id="awName"></span></p>
+        <p><strong>Balance:</strong> <span id="awBalance" style="color: #2E7D32; font-weight: bold; font-size: 18px;"></span></p>
+        <button onclick="window.refundUserWallet()" style="background: #F44336; color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; margin-top: 10px; font-weight: bold; cursor: pointer;">
+            Mark as Refunded (Set Balance to 0)
+        </button>
+    </div>
+</div>
+
+
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrvdknWfFKdl9Bn8TJRrpWEc2RQDEHZqE",
+            authDomain: "eggshop-702f6.firebaseapp.com",
+            projectId: "eggshop-702f6",
+            storageBucket: "eggshop-702f6.firebasestorage.app",
+            messagingSenderId: "290586261198",
+            appId: "1:290586261198:web:61cd80463c8c2c5f06429f",
+            measurementId: "G-HVJKWCER6S"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- CREDENTIALS ---
+        const CREDENTIALS = {
+            "ashrafsquad001@gmail.com": { pass: "Ashraf.3691", role: "SUPER" },
+            "abdulraxmanxamza@gmail.com": { pass: "Ahamza4066", role: "MANAGER" }
+        };
+        const MASTER_CODE = "1357911";
+
+        let currentEmail = "";
+        let currentRole = "";
+
+        // --- LOGIN LOGIC ---
+        window.checkEmail = () => {
+            const email = document.getElementById('secEmail').value.trim().toLowerCase();
+            const err = document.getElementById('error-display');
+            if(CREDENTIALS[email]) {
+                currentEmail = email;
+                currentRole = CREDENTIALS[email].role;
+                document.getElementById('step-1').classList.remove('active');
+                document.getElementById('step-2').classList.add('active');
+                err.innerText = "";
+            } else { err.innerText = "Gmail is not correct"; }
+        };
+
+        window.checkPass = () => {
+            const pass = document.getElementById('secPass').value;
+            const err = document.getElementById('error-display');
+            if(pass === CREDENTIALS[currentEmail].pass) {
+                document.getElementById('step-2').classList.remove('active');
+                document.getElementById('step-3').classList.add('active');
+                err.innerText = "";
+            } else { err.innerText = "Wrong password"; }
+        };
+
+        window.checkCode = async () => {
+            const code = document.getElementById('secCode').value;
+            const err = document.getElementById('error-display');
+            const btn = document.getElementById('finalLoginBtn');
+
+            if(code === MASTER_CODE) {
+                try {
+                    btn.innerText = "Authenticating...";
+                    btn.disabled = true;
+                    await signInWithEmailAndPassword(auth, currentEmail, CREDENTIALS[currentEmail].pass);
+                    document.getElementById('security-overlay').style.display = 'none';
+                    document.getElementById('admin-panel').style.display = 'block';
+                    initDashboard(currentRole);
+                } catch (error) {
+                    console.error(error);
+                    err.innerText = "Firebase Error: " + error.code;
+                    btn.innerText = "Login As Admin";
+                    btn.disabled = false;
+                }
+            } else { err.innerText = "Invalid Code"; }
+        };
+
+        window.logoutAdmin = () => signOut(auth).then(() => window.location.href = 'index.html');
+
+        // --- MANUAL SAVE LOGIC (Backup) ---
+        window.parseAndSavePayment = async () => {
+            const text = document.getElementById('mpesaSmsInput').value;
+            if(!text) return alert("Please paste the SMS first.");
+            const codeRegex = /([A-Z0-9]{10})\s+Confirmed/i;
+            const amountRegex = /Ksh\.?\s*([\d,]+\.?\d*)/i;
+            const phoneRegex = /\d{10,12}/;
+
+            const codeMatch = text.match(codeRegex);
+            const amountMatch = text.match(amountRegex);
+            const phoneMatch = text.match(phoneRegex);
+
+            if(!codeMatch) return alert("❌ Could not find a valid M-Pesa Code.");
+            if(!amountMatch) return alert("❌ Could not find the Amount.");
+
+            const code = codeMatch[1].toUpperCase();
+            const amountRaw = amountMatch[1].replace(/,/g, ''); 
+            const amount = parseFloat(amountRaw);
+            const phone = phoneMatch ? phoneMatch[0] : "Unknown";
+
+            try {
+                await setDoc(doc(db, "mpesa_payments", code), {
+                    transactionId: code,
+                    amount: amount,
+                    phone: phone,
+                    fullMessage: text,
+                    used: false,
+                    method: "Manual Admin Entry",
+                    timestamp: serverTimestamp()
+                });
+                alert(`✅ SAVED!\nCode: ${code}\nAmount: Ksh ${amount}`);
+                document.getElementById('mpesaSmsInput').value = ""; 
+            } catch(e) { alert("Error saving: " + e.message); }
+        };
+
+        // --- DASHBOARD FUNCTIONS ---
+        function initDashboard(role) {
+            const isSuper = (role === "SUPER");
+            loadOrders(isSuper);
+
+            if(isSuper) {
+                loadPrice();
+                document.getElementById('manualEntrySection').style.display = 'block'; 
+            } else {
+                document.getElementById('priceEditor').style.display = 'none';
+                document.getElementById('manualEntrySection').style.display = 'none'; 
+                document.getElementById('dashboardTitle').innerText = "Delivery Dashboard";
+            }
+        }
+
+        async function loadPrice() {
+            const docSnap = await getDoc(doc(db, "config", "pricing"));
+            if (docSnap.exists()) {
+                document.getElementById('adminPriceInput').value = docSnap.data().currentPrice;
+                document.getElementById('adminStockInput').value = docSnap.data().currentStock || 0; 
+            }
+        }
+
+        window.updateGlobalPrice = async () => {
+            const newPrice = parseInt(document.getElementById('adminPriceInput').value);
+            const newStock = parseInt(document.getElementById('adminStockInput').value); 
+
+            if(newPrice < 1) return alert("Invalid price");
+            
+            try {
+                await setDoc(doc(db, "config", "pricing"), { 
+                    currentPrice: newPrice,
+                    currentStock: newStock 
+                }, { merge: true });
+                
+                alert(`✅ Updated!\nPrice: ${newPrice}\nStock: ${newStock}`);
+            } catch (e) { alert("Update failed: " + e.message); }
+        };
+
+        window.verifyDeliveryCode = async (orderId) => {
+            const codeInput = prompt("Ask customer for the 5-char Delivery Code:");
+            if (!codeInput) return;
+            const orderRef = doc(db, "orders", orderId);
+            const orderSnap = await getDoc(orderRef);
+
+            if (orderSnap.exists()) {
+                const realCode = orderSnap.data().deliveryCode;
+                if (realCode && codeInput.toUpperCase() === realCode) {
+                    await updateDoc(orderRef, { status: 'Delivered' });
+                    alert("✅ SUCCESS! Order marked Delivered.");
+                } else alert("❌ ERROR! Code does not match.");
+            }
+        };
+
+        window.markDeliveredForce = async (id) => {
+            if(confirm("Force mark as delivered?")) await updateDoc(doc(db, "orders", id), { status: 'Delivered' });
+        };
+
+        function loadOrders(isSuper) {
+            // NOTE: If you see an error about Indexes in the console, click the link Firebase provides.
+            const q = query(collection(db, "orders"), orderBy("createdAt", "desc"));
+            
+            onSnapshot(q, (snap) => {
+                const list = document.getElementById('adminOrdersList');
+                list.innerHTML = "";
+                if(snap.empty) { list.innerHTML = "<p>No orders yet.</p>"; return; }
+
+                snap.forEach(docSnap => {
+                    const o = docSnap.data();
+                    const date = o.createdAt && o.createdAt.toDate ? o.createdAt.toDate().toLocaleString() : 'Just now';
+                    const isPending = o.status === 'Pending';
+                    const statusClass = o.status === 'Delivered' ? 'status-Delivered' : 'status-Pending';
+
+                    let buttons = '';
+                    if (isPending) {
+                        buttons += `<button class="btn-deliver" onclick="verifyDeliveryCode('${docSnap.id}')" style="background:#FF9800; color:black;"><i class="fa-solid fa-key"></i> Verify</button>`;
+                        if(isSuper) buttons += `<button onclick="markDeliveredForce('${docSnap.id}')" style="margin-left:5px; background:#999; color:white; border:none; padding:8px; border-radius:6px; font-size:12px;">Force</button>`;
+                    }
+
+                    // --- FIXED MAP LINK LOGIC ---
+                    let mapLink = "#";
+                    if (o.locationCoords && o.locationCoords.lat && o.locationCoords.lng) {
+                        // Correct Google Maps URL with ${} interpolation
+                        mapLink = `https://www.google.com/maps?q=${o.locationCoords.lat},${o.locationCoords.lng}`;
+                    } else {
+                        // Fallback URL with ${} interpolation
+                        mapLink = `https://www.google.com/maps?q=${encodeURIComponent(o.address + ', Mombasa')}`;
+                    }
+
+                    // --- SAFETY CHECK FOR PHONE NUMBER ---
+                    // Prevents crash if number is missing or weird format
+                    const waLink = o.mpesaNumber 
+                        ? `https://wa.me/254${String(o.mpesaNumber).slice(-9)}`
+                        : '#';
+
+                    const codeDisplay = isSuper 
+                        ? `<small style="background:#eee; padding:2px 6px; border-radius:4px; color:#555;">Code: <b>${o.deliveryCode}</b></small>` 
+                        : `<small style="background:#eee; padding:2px 6px; border-radius:4px; color:#555;">Code: 🔒 Hidden</small>`;
+
+                    list.innerHTML += `
+                        <div class="order-card" style="border-left: 5px solid ${isPending ? '#FF9800' : '#4CAF50'}">
+                            <div class="order-header">
+                                <strong>#${docSnap.id.slice(0,5)}</strong>
+                                ${codeDisplay}
+                                <span class="status-badge ${statusClass}">${o.status}</span>
+                            </div>
+                            <div style="font-size:14px; margin-bottom:5px;">
+                                <b>${o.quantity} Trays</b> (${o.item}) <br>
+                                Total: Ksh ${o.totalPrice} <br>
+                                M-Pesa: ${o.mpesaNumber || 'N/A'}
+                            </div>
+                            <div style="font-size:12px; color:#666; margin-bottom:10px;">
+                                <i class="fa-solid fa-user"></i> ${o.userName || 'User'} <br>
+                                <i class="fa-solid fa-location-dot"></i> ${o.address} <br>
+                                <i class="fa-regular fa-clock"></i> ${date}
+                            </div>
+                            <div class="admin-actions">
+                                <a href="${mapLink}" target="_blank" class="btn-map">
+                                    <i class="fa-solid fa-map-location-dot"></i> Map
+                                </a>
+                                ${buttons}
+                                <a href="${waLink}" target="_blank" class="btn-map" style="background:#25D366; text-decoration:none; display:inline-flex; align-items:center;">
+                                    <i class="fa-brands fa-whatsapp"></i> Chat
+                                </a>
+                            </div>
+                        </div>
+                    `;
+                });
+            }, (error) => { 
+                console.error(error); 
+                // Display error on screen so you know why it's stuck!
+                const list = document.getElementById('adminOrdersList');
+                list.innerHTML = `
+                    <div style="text-align:center; padding:20px; color:#D32F2F; background:#FFEBEE; border-radius:8px;">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size:30px;"></i>
+                        <p><strong>Error Loading Orders</strong></p>
+                        <p style="font-size:12px;">${error.message}</p>
+                        <p style="font-size:11px; color:#555;">(Check browser console if it says "Index Required")</p>
+                    </div>
+                `;
+            });
+        }
+
+import { doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// Save the queried user ID globally for the refund function
+window.currentRefundUserId = null;
+
+window.checkUserWallet = async () => {
+    const uid = document.getElementById('adminUserIdInput').value.trim();
+    if (!uid) return alert("Please enter a User ID");
+
+    try {
+        const userRef = doc(db, "users", uid);
+        const snap = await getDoc(userRef);
+
+        if (snap.exists()) {
+            const data = snap.data();
+            window.currentRefundUserId = uid;
+            
+            document.getElementById('awName').innerText = data.name || "Unknown User";
+            document.getElementById('awBalance').innerText = "Ksh " + (data.walletBalance || 0).toLocaleString();
+            document.getElementById('adminWalletResult').style.display = 'block';
+        } else {
+            alert("User not found in database.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("Error checking wallet.");
+    }
+};
+
+window.refundUserWallet = async () => {
+    if (!window.currentRefundUserId) return;
+    
+    const confirmRefund = confirm("Are you sure? This will set their wallet balance to ZERO.\n\nMake sure you have manually sent them the money via M-Pesa before doing this.");
+    
+    if (confirmRefund) {
+        try {
+            const userRef = doc(db, "users", window.currentRefundUserId);
+            await updateDoc(userRef, { walletBalance: 0 });
+            
+            alert("✅ Wallet successfully reset to 0. The refund is complete.");
+            document.getElementById('adminWalletResult').style.display = 'none';
+            document.getElementById('adminUserIdInput').value = "";
+            window.currentRefundUserId = null;
+        } catch (e) {
+            console.error(e);
+            alert("Error refunding wallet.");
+        }
+    }
+};
+
+        
+    </script>
+</body>
+</html>

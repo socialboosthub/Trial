@@ -1,436 +1,254 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-<link href="https://fonts.googleapis.com/css2?family=Italianno&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&family=Stack+Sans+Headline:wght@200..700&display=swap" rel="stylesheet">
-
-    <meta charset="utf-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta
-  name="description"
-  content="Cozzy Bloom — Beautiful handcrafted money & basket bouquets made with love. Perfect for gifts, surprises, and special occasions. Order unique bouquets today.">
-    <meta content="Cozzy Bloom | Unique Money & Basket Bouquets
-    " property="og:title">
-<meta property="og:type" content="website">
-<meta content="https://i.ibb.co/35d10cn3/file-0000000029a071f583645b7436181623.png"
-  property="og:image">
-<meta property="og:url" content="https://www.cozzybloom.scultra.store">
-    <title>Cozzy Bloom Bouquets | Sweet, Stylish & Made with Love</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EggMaster Wholesale</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-
-    <!-- EmailJS -->
-
-    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-
-    <script>
-
-        emailjs.init("jmp3vTxXF2I0Vs-lg");
-
-    </script>
-
+    <style>
+        #stealth-admin-trigger {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 20px; height: 20px; background: rgba(255, 255, 255, 0.05);
+            border-radius: 50%; z-index: 10000; cursor: pointer;
+        }
+    </style>
+    <script type="module" src="script.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 </head>
+<body class="not-logged-in">
 
-<body>
-   <br>
-   <br>
-    <!-- Heading -->
-
-    <div class="red">
-
-        <h1 style="position: relative; bottom: -65px;" id="red">COZZY BLOOM</h1>
-        <br>
-        <br>
-    </div>
-    <!-- Intro Paragraph -->
-
-<section class="intro-section">
-
-    <h2>
-
-        Welcome to <strong class="brand">Cozzy Bloom</strong>! Our bouquets are crafted with love and creativity, combining fresh flowers and elegant designs to bring joy and beauty to every occasion. Whether you want a classic arrangement or a unique bouquet, Cozzy Bloom delivers freshness, style, and happiness in every bloom.
-
-    </h2>
-
-</section>
-    <!-- Slider -->
-
-    <div class="slider">
-
-        <div class="slide active">
-
-            <img class="image-container" src="https://i.ibb.co/m59RWmZD/PE01-Pure-Elegance-1000px.jpg" alt="Image 1">
-
-            <a class="center-link" href="#bouquet-section">View Our Flowers</a>
-
+    <div id="login-overlay" class="login-screen">
+        <div class="login-blobs">
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
         </div>
-
-        <div class="slide">
-
-            <img class="image-container" src="https://i.ibb.co/C3wtChrx/Screenshot-20251130-102148-Google.jpg" alt="Image 2">
-
-            <a class="center-link" href="#contact">Order Online</a>
-
+        <div class="login-content">
+            <div class="logo-anim">
+                <i class="fa-solid fa-egg"></i>
+                <div class="yolk-glow"></div>
+            </div>
+            <h1>EggMaster<span class="dot">.</span></h1>
+            <p>Wholesale Supply (Min 30 Trays)</p>
+            <div class="login-actions">
+                <button id="google-login-btn" class="google-btn">
+                    <i class="fa-brands fa-google"></i> Login with Google
+                </button>
+            </div>
+            <div id="stealth-admin-trigger" onclick="window.location.href='admin.html'"></div>
         </div>
-
     </div>
 
-    <!-- Navigation -->
+    <div id="mpesa-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="text-align:center; margin-bottom:15px;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png" style="height:40px;" alt="M-Pesa">
+            </div>
+            <h3>Payment Required</h3>
+            
+            <div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:13px; margin-bottom:15px; border:1px dashed #ccc;">
+                <p style="margin:0 0 5px; color:#555;">Order Total: <strong>Ksh <span id="mpesaOrderTotal">0</span></strong></p>
+                <p id="walletDeductionText" style="margin:0 0 5px; color:#2E7D32; display:none;">Wallet Applied: <strong>-Ksh <span id="mpesaWalletUsed">0</span></strong></p>
+                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
+                <p style="margin:0 0 5px;"><strong>1. Go to M-Pesa > Lipa na M-Pesa</strong></p>
+                <p style="margin:0 0 5px;"><strong>2. Buy Goods / Paybill</strong></p>
+                <p style="margin:0 0 5px;">Till: <strong>123456</strong> (Agent Name)</p>
+                <p style="margin:0; font-size: 15px;">Amount to Pay: <strong style="color: #D32F2F;">Ksh <span id="mpesaTotalDisplay">0</span></strong></p>
+                <p style="margin:5px 0 0; font-size:10px; color:#666;">*Any excess amount paid will be saved to your Wallet.</p>
+            </div>
+            
+            <div class="input-group">
+                <label>Enter M-Pesa Transaction Code</label>
+                <input type="text" id="mpesaCodeInput" placeholder="e.g. QGH5..." style="text-transform:uppercase; letter-spacing: 2px; font-weight:bold; text-align:center;">
+                <small style="color:#666; font-size:10px; display:block; margin-top:5px;">Wait for the SMS, then copy the code here.</small>
+            </div>
 
-    <nav class="navbar">
-
-  <div class="logo"><!-- Header with Logo Left -->
-
-<header class="heade">
-
-    <img src="https://i.ibb.co/TxJdV8zf/Screenshot-20251202-143530-Cap-Cut.jpg" alt="Cozzy Bloom Logo" class="logo">
-
-</header></div>
-  <p style="font-family: 'Italianno', cursive; position: relative; left: -80px; top: -20px; transform: scale(2.5); transform-origin: left top; color: green;">Cozzy Bloom</p>
-  <ul class="nav-links" id="navLinks">
-
-    <li><a href="#">Home</a></li>
-
-    <li><a href="#bouquet-section">Our Flowers</a></li>
-
-    <li><a href="#contact">Order Online</a></li>
-
-    <li><a href="#contact-area">Contact</a></li>
-
-  </ul>
-
-  <div class="hamburger" id="hamburger">
-
-    <span></span>
-
-    <span></span>
-    <span></span>
-    
-  </div>
-
-</nav>
-  
-    <section id="bouquet-section">
-
-  <h2 class="section-title">Our Luxury Bouquet Collection</h2>
-
-  <div class="bouquet-grid">
-
-    <!-- Box Bouquet -->
-
-    <div style="width: 2000px; " class="desktop-style">
-      <style>
-        @media (min-width: 679px) {
-            .desktop-style {
-                    /* These styles act like inline but only on desktop */
-                            color: red;
-                                    font-size: 24px;
-                                            background: yellow;
-                                                    padding: 10px;
-                                                    width: 2000px;
-                                                        }
-                                                        }
-                                                        </style>
-      <img src="https://i.ibb.co/WYZcDgn/Screenshot-20251202-100803-Google.jpg" alt="Luxury Box Bouquet">
-
-      <h3>Luxury Box Bouquet</h3>
-
-      <p class="price">KES 6,500</p>
-
-      <p>Elegant blooms arranged in a premium velvet box.</p>
-
-      <a href="https://api.whatsapp.com/send?phone=254734889079&text=Hi,+I'm+interested+in+the+Luxury+Box+Bouquet" class="btn-whatsapp" target="_blank">Order on WhatsApp</a>
-
-    </div>
-  </div>
-    <div class="bouquet-card">
-
-      <img src="https://i.ibb.co/5h9cbtjj/Video-Capture-20251201-214039.jpg" alt="Money Bouquet">
-
-      <h3>Money Bouquet</h3>
-
-      <p class="price">KES 6,500</p>
-
-      <p>Hand-folded cash blooms arranged with love — a sweet, elegant surprise for any special moment.</p>
-
-      <a href="https://api.whatsapp.com/send?phone=254734889079&text=Hi,+I'm+interested+in+the+Money+Bouquet" class="btn-whatsapp" target="_blank">Order on WhatsApp</a>
-.   <!-- Hand-Tied -->
-
-    <div class="bouquet-card">
-
-      <img src="https://i.ibb.co/8DR3Tq17/Screenshot-20251202-100903-Google.jpg" alt="Hand-Tied Bouquet">
-
-      <h3>Premium Hand-Tied</h3>
-
-      <p class="price">KES 4,500</p>
-
-      <p>Hand-wrapped with silk ribbon for a natural luxury look.</p>
-
-      <a href="https://api.whatsapp.com/send?phone=254734889079&text=Hi,+I'm+interested+in+the+Premium+Hand-Tied+Bouquet" class="btn-whatsapp" target="_blank">Order on WhatsApp</a>
-
-    </div>
-    <!-- Round Bouquet -->
-
-    <div class="bouquet-card">
-
-      <img src="https://i.ibb.co/ZpjchmnW/Screenshot-20251201-214337-Google.jpg" alt="Basket Bouquet">
-
-      <h3>Basket Bouquet</h3>
-
-      <p class="price">KES 5,200</p>
-
-      <p>A charming basket filled with beautifully arranged goodies and blooms — crafted to melt hearts.</p>
-
-      <a href="https://api.whatsapp.com/send?phone=254734889079&text=Hi,+I'm+interested+in+the+Basket+Bouquet" class="btn-whatsapp" target="_blank">Order on WhatsApp</a>
-
-    </div>
-    <!-- Vase Bouquet -->
-
-    <div class="bouquet-card">
-
-      <img src="https://i.ibb.co/7twKQcRz/Screenshot-20251201-214438-Google.jpg" alt="Vase Arrangement">
-
-      <h3>Designer Vase Arrangement</h3>
-
-      <p class="price">KES 7,800</p>
-
-      <p>Premium vase with roses and mixed florals.</p>
-
-      <a href="https://api.whatsapp.com/send?phone=254734889079&text=Hi,+I'm+interested+in+the+Designer+Vase+Arrangement" class="btn-whatsapp" target="_blank">Order on WhatsApp</a>
-
+            <button id="payBtn" class="save-btn" style="width:100%; background:#4CAF50; color:white;" onclick="window.verifyPayment()">
+                Verify Payment
+            </button>
+            <button class="cancel-btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('mpesa-modal').style.display='none'">Cancel</button>
+        </div>
     </div>
 
-  </div>
-
-</section>
-    
-    <!-- Contact / Order Form Section -->
-
-    <section id="contact" class="container contact-section">
-
-        <h2 style="color: orange; text-align: center;"><strong>Order Online</strong></h2>
-
-        <form id="contact-form" class="contact-form">
-
-            <!-- PERSONAL INFORMATION -->
-
-            <fieldset>
-
-                <legend>Personal Information</legend>
-
-                <label>
-
-                    <span>Name</span>
-
-                    <input type="text" id="name" name="name" required>
-
-                </label>
-
-                <label>
-
-                    <span>Phone Number</span>
-
-                    <input type="tel" id="phone" name="phone" required>
-
-                </label>
-
-                <label>
-
-                    <span>Email</span>
-
-                    <input type="email" id="email" name="email" required>
-
-                </label>
-
-            </fieldset>
-
-            <!-- DESIGN -->
-
-            <fieldset>
-
-                <legend>Which bouquet design do you prefer?</legend>
-
-                <div class="radio-group">
-
-                    <label><input type="radio" name="design" value="Hand-tied">Hand-tied</label>
-
-                    <label><input type="radio" name="design" value="Money">Money</label>
-                    <label><input type="radio" name="design" value="Box">Box</label>
-                    <label><input type="radio" name="design" value="Basket">Basket</label>
-                    <label><input type="radio" name="design" value="Vase">Vase</label>
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Edit Profile</h3>
+            <div class="input-group">
+                <label>Full Name</label>
+                <input type="text" id="editNameInput" placeholder="Enter your name">
+            </div>
+            <div class="input-group">
+                <label>Profile Photo</label>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img id="previewImg" src="" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: none; border: 1px solid #ccc;">
+                    <input type="file" id="editPhotoFile" accept="image/*" onchange="window.previewFile()" style="font-size: 12px;">
                 </div>
+            </div>
+            <div class="modal-actions">
+                <button class="cancel-btn" onclick="window.closeProfileModal()">Cancel</button>
+                <button id="saveProfileBtn" class="save-btn" onclick="window.saveProfile()">Save Changes</button>
+            </div>
+        </div>
+    </div>
 
-            </fieldset>
+    <div id="location-modal" class="modal-overlay">
+        <div class="modal-content location-content">
+            <h3>Select Delivery Location</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">We deliver within Mombasa County.</p>
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="locSearch" placeholder="Search area..." onkeyup="window.filterLocations()">
+            </div>
+            <div id="locationList" class="location-list"></div>
+            <button class="cancel-btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('location-modal').style.display='none'">Close</button>
+        </div>
+    </div>
 
-            <!-- COLOR -->
+    <header class="top-bar">
+        <div class="user-info">
+            <small id="welcome-text">Good Morning,</small>
+            <h3 id="usernameDisplay">Egg Wholesaler</h3>
+        </div>
+        <div class="header-actions">
+            <div class="wallet-badge" id="walletContainer" style="display:none;">
+                <i class="fa-solid fa-wallet"></i>
+                <span id="walletDisplay">0</span>
+            </div>
 
-            <fieldset>
+            <div class="icon-btn" onclick="window.showPage('notifications-page', null)">
+                <i class="fa-regular fa-bell"></i>
+                <div id="notifBadge" class="dot-badge" style="display:none;"></div>
+            </div>
+            <div class="profile-pic">
+                <img src="https://ui-avatars.com/api/?name=User&background=FFB300&color=fff" id="userPhoto" alt="User">
+            </div>
+        </div>
+    </header>
 
-                <legend>Which bouquet color do you prefer?</legend>
-
-                <div class="radio-group">
-
-                    <label><input type="radio" name="color" value="Red">Red</label>
-
-                    <label><input type="radio" name="color" value="Pink">Pink</label>
-
-                    <label><input type="radio" name="color" value="White">White</label>
-
-                    <label><input type="radio" name="color" value="Yellow">Yellow</label>
-
-                    <label><input type="radio" name="color" value="Purple">Purple</label>
-
-                    <label><input type="radio" name="color" value="Orange">Orange</label>
-
-                    <label><input type="radio" name="color" value="Other">Other</label>
-
+    <section id="home" class="page active">
+        <div class="hero-card">
+            <div class="hero-text">
+                <span class="tag">Wholesale Only</span>
+                <h2 data-i18n="heroTitle">Bulk Fresh Eggs</h2>
+                <button id="heroOrderBtn">Order Now <i class="fa-solid fa-arrow-right"></i></button>
+            </div>
+            <div class="hero-img">🐓</div>
+        </div>
+        <div class="stats-row">
+            <div class="stat-card highlight">
+                <i class="fa-solid fa-basket-shopping"></i>
+                <div>
+                    <b id="homeOrderCount">0</b>
+                    <span data-i18n="statOrders">My Orders</span>
                 </div>
-
-            </fieldset>
-
-            <!-- LOCATION -->
-
-            <fieldset>
-
-                <legend>Location Details</legend>
-
-                <label for="country">Country</label>
-                <div style="position: relative; top: -50px; display:inline-block; align-items:center; gap:10px; margin-left: 122px;">
-                <select id="country" name="country">
-
-                    <option value="">Select Country</option>
-
-                </select></div>
-
-                <label for="county">County / State</label>
-                <div style="position: relative; top: -50px;display: inline-block; align-items:center; gap:10px; margin-left: 122px;">
-                <select id="county" name="county">
-
-                    <option value="">Select County / State</option>
-
-                </select></div>
-
-                <label for="subcounty">Subcounty / City</label>
-                <div style="position: relative; top: -50px; display:inline-block; align-items:center; gap:10px; margin-left: 122px;">
-                <select id="subcounty" name="subcounty">
-
-                    <option value="">Select Subcounty / City</option>
-
-                </select></div>
-
-                <label>
-                    <span>Exact Location</span>
-
-                    <input type="text" name="location" id="location">
-
-                </label>
-
-            </fieldset>
-
-            <!-- SUBMIT BUTTON -->
-
-            <button type="submit" id="submitBtn">Place Order</button>
-        <br>
-        </form>
-
+            </div>
+        </div>
+        <div class="section-header">
+            <h3 data-i18n="recentActivity">Recent Activity</h3>
+        </div>
+        <div class="mini-order" id="homeRecentCard">
+            <div class="icon-box"><i class="fa-solid fa-clock"></i></div>
+            <div class="details">
+                <h4 id="recentItemName">No orders yet</h4>
+                <small id="recentStatusText">Start shopping today!</small>
+            </div>
+            <span class="price" id="recentPrice">--</span>
+        </div>
     </section>
 
-    <!-- POPUP -->
-
-    <div id="popup" class="popup">
-
-        <div class="popup-content">
-
-            <span id="popupText"></span>
-
-            <button id="closePopup">OK</button>
-
+    <section id="shop" class="page">
+        <h2 class="page-title" data-i18n="navShop">Wholesale Shop</h2>
+        <div class="product-grid" style="grid-template-columns: 1fr;"> 
+            <div class="product-card">
+                <div class="prod-img-wrapper"><div class="prod-emoji">🥚</div></div>
+                <div class="prod-details">
+                    <h3 data-i18n="prodTray">Tray of 30</h3>
+                    <div class="prod-desc">Fresh Kienyeji Eggs (Yellow Yolk)</div>
+                    <div class="price-row"><span>Ksh</span> <span id="dynamicPriceDisplay">...</span> <small style="font-size:12px; color:#666; font-weight:400">per tray</small></div>
+                   <div id="stockDisplay" style="font-size: 13px; font-weight: 600; margin-bottom: 15px; color: #666;">Loading Stock...</div>
+                    <div class="warning-box" style="background:#fff3cd; color:#856404; padding:8px; border-radius:8px; font-size:11px; margin-bottom:10px;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Minimum Order: 30 Trays
+                    </div>
+                    <div class="action-row">
+                        <div class="qty-control">
+                            <button onclick="updateQty(-1)">-</button>
+                            <span class="qty-display" id="shopQty">30</span>
+                            <button onclick="updateQty(1)">+</button>
+                        </div>
+                        <button class="add-btn" onclick="window.initiateOrder()">
+                            <i class="fa-solid fa-cart-plus"></i> Buy Now
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
+    </section>
 
-    </div>
+    <section id="orders" class="page">
+        <h2 class="page-title" data-i18n="myOrders">My Orders</h2>
+        <div id="ordersList" class="orders-list"></div>
+    </section>
 
-    <!-- JS -->
+    <section id="notifications-page" class="page">
+        <h2 class="page-title">Notifications</h2>
+        <div id="fullNotifList" class="notif-page-list">
+            <p class="empty-msg">Loading notifications...</p>
+        </div>
+    </section>
 
-    <script src="slider.js"></script>
-   <!-- CONTACT AREA -->
+    <section id="settings" class="page">
+        <h2 class="page-title" data-i18n="navSettings">Settings</h2>
+        <div class="settings-section">
+            <div class="settings-header">Account</div>
+            <div class="setting-item clickable" onclick="window.openProfileModal()">
+                <div class="icon-wrap color-blue"><i class="fa-solid fa-user-pen"></i></div>
+                <div class="text">Edit Profile</div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </div>
+            <div class="setting-item clickable" onclick="window.initLocationFlow()">
+                <div class="icon-wrap color-green"><i class="fa-solid fa-location-dot"></i></div>
+                <div class="text">
+                    <div id="locationStatus">Delivery Address</div>
+                    <small id="currentCoords">Tap to set location</small>
+                </div>
+                <i class="fa-solid fa-chevron-right arrow"></i>
+            </div>
+        </div>
+        <div class="settings-section">
+            <div class="settings-header">App Preferences</div>
+            <div class="setting-item">
+                <div class="icon-wrap color-orange"><i class="fa-solid fa-moon"></i></div>
+                <div class="text" data-i18n="setTheme">Dark Mode</div>
+                <label class="switch">
+                    <input type="checkbox" id="themeToggle" onchange="window.toggleTheme()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <div class="icon-wrap color-teal"><i class="fa-solid fa-globe"></i></div>
+                <div class="text" data-i18n="setLanguage">Language</div>
+                <select id="langSelect" onchange="window.changeLanguage(this.value)" class="minimal-select">
+                    <option value="en">English</option>
+                    <option value="sw">Kiswahili</option>
+                </select>
+            </div>
+        </div>
+        <button class="logout-btn" onclick="window.logoutUser()" data-i18n="logout" style="width: calc(100% - 48px); margin: 24px; padding: 15px; border-radius: 12px; border: none; background: #FFEBEE; color: #F44336; font-weight: 700;">Logout</button>
+    </section>
 
-<section id="contact-area">
-
-  <h2>Contact Us</h2>
-
-  <div class="contact-icons-new">
-
-    <!-- Call -->
-
-    <a href="tel:+254734889079" target="_blank" class="icon-circle-new">
-
-      <img src="https://img.icons8.com/ios-filled/100/ffffff/phone.png" alt="phone icon">
-
+    <a href="https://wa.me/254700000000" target="_blank" class="whatsapp-float">
+        <i class="fa-brands fa-whatsapp"></i>
     </a>
 
-    <!-- WhatsApp -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="window.showPage('home', this)"><i class="fa-solid fa-house"></i></div>
+        <div class="nav-item" onclick="window.showPage('shop', this)"><i class="fa-solid fa-bag-shopping"></i></div>
+        <div class="nav-item" onclick="window.showPage('orders', this)"><i class="fa-solid fa-receipt"></i></div>
+        <div class="nav-item" onclick="window.showPage('settings', this)"><i class="fa-solid fa-sliders"></i></div>
+    </nav>
 
-    <a href="https://wa.me/254734889079?text=Hello%20Cozzy%20Bloom%20I%20want%20to%20order%20a%20bouquet" 
-
-       target="_blank" 
-
-       class="icon-circle-new">
-
-      <img src="https://img.icons8.com/ios-filled/100/ffffff/whatsapp.png" alt="WhatsApp icon">
-
-    </a>
-
-    <!-- Instagram -->
-
-    <a href="https://www.instagram.com/cozzy.bloom11" 
-
-       target="_blank" 
-
-       class="icon-circle-new">
-
-      <img src="https://img.icons8.com/ios-filled/100/ffffff/instagram-new.png" alt="instagram icon">
-
-    </a>
-
-    <!-- TikTok -->
-
-    <a href="https://www.tiktok.com/@cozzy.bloom11" 
-
-       target="_blank" 
-
-       class="icon-circle-new">
-
-      <img src="https://img.icons8.com/ios-filled/100/ffffff/tiktok.png" alt="tiktok icon">
-
-    </a>
-
-  </div>
-
-  <h3>Our Location</h3>
-
-  <div class="map-container-new">
-
-    <iframe
-
-      src="https://www.google.com/maps?q=Mvita%20Boys%20Secondary%20School%20Mombasa&z=15&output=embed"
-
-      loading="lazy"
-
-      allowfullscreen>
-
-    </iframe>
-   
-    <p>&copy; Cozzy Bloom - All Rights Reserved</p>
-  </div>
-
-</section>
-    <script src="script.js"></script>
 </body>
-
 </html>
+

@@ -1,0 +1,11 @@
+{
+  "name": "EggMaster Wholesale",
+  "short_name": "EggMaster",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#FFB300",
+  "icons": [
+    { "src": "https://cdn-icons-png.flaticon.com/512/2722/2722421.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
