@@ -41,36 +41,52 @@
         </div>
     </div>
 
-    <div id="mpesa-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div style="text-align:center; margin-bottom:15px;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png" style="height:40px;" alt="M-Pesa">
-            </div>
-            <h3>Payment Required</h3>
-            
-            <div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:13px; margin-bottom:15px; border:1px dashed #ccc;">
-                <p style="margin:0 0 5px; color:#555;">Order Total: <strong>Ksh <span id="mpesaOrderTotal">0</span></strong></p>
-                <p id="walletDeductionText" style="margin:0 0 5px; color:#2E7D32; display:none;">Wallet Applied: <strong>-Ksh <span id="mpesaWalletUsed">0</span></strong></p>
-                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
-                <p style="margin:0 0 5px;"><strong>1. Go to M-Pesa > Lipa na M-Pesa</strong></p>
-                <p style="margin:0 0 5px;"><strong>2. Buy Goods / Paybill</strong></p>
-                <p style="margin:0 0 5px;">Till: <strong>123456</strong> (Agent Name)</p>
-                <p style="margin:0; font-size: 15px;">Amount to Pay: <strong style="color: #D32F2F;">Ksh <span id="mpesaTotalDisplay">0</span></strong></p>
-                <p style="margin:5px 0 0; font-size:10px; color:#666;">*Any excess amount paid will be saved to your Wallet.</p>
-            </div>
-            
-            <div class="input-group">
-                <label>Enter M-Pesa Transaction Code</label>
-                <input type="text" id="mpesaCodeInput" placeholder="e.g. QGH5..." style="text-transform:uppercase; letter-spacing: 2px; font-weight:bold; text-align:center;">
-                <small style="color:#666; font-size:10px; display:block; margin-top:5px;">Wait for the SMS, then copy the code here.</small>
+    <div id="payment-page-overlay" class="modal-overlay" style="align-items: flex-start; padding: 0; background: var(--bg); overflow-y: auto;">
+        <div class="payment-full-page">
+            <h2 class="top-title">Confirm Payments</h2>
+
+            <div class="payment-section">
+                <h3 class="section-title">Order Summary</h3>
+                <ul class="check-list">
+                    <li><i class="fa-solid fa-square-check"></i> Number of Trays: <span id="summaryQty">30</span></li>
+                    <li><i class="fa-solid fa-square-check"></i> Price per Tray: Ksh <span id="summaryPrice">400</span></li>
+                    <li><i class="fa-solid fa-square-check"></i> Total Amount: Ksh <span id="summaryTotal">12,000</span></li>
+                    <li id="summaryWallet" style="display:none; color: #2E7D32;"><i class="fa-solid fa-square-check"></i> Wallet Applied: -Ksh <span id="summaryWalletUsed">0</span></li>
+                </ul>
             </div>
 
-            <button id="payBtn" class="save-btn" style="width:100%; background:#4CAF50; color:white;" onclick="window.verifyPayment()">
-                Verify Payment
-            </button>
-            <button class="cancel-btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('mpesa-modal').style.display='none'">Cancel</button>
+            <div class="payment-section">
+                <h3 class="section-title">How To Pay</h3>
+                <ul class="check-list">
+                    <li><i class="fa-solid fa-square-check"></i> Open M-PESA > Withdraw Cash > From Agent</li>
+                    <li class="copy-list-item">
+                        <span><i class="fa-solid fa-square-check"></i> Agent No: <strong style="color: black;">7172200</strong></span>
+                        <button class="copy-btn" onclick="window.copyToClipboard('7172200')"><i class="fa-regular fa-copy"></i></button>
+                    </li>
+                    <li class="copy-list-item">
+                        <span><i class="fa-solid fa-square-check"></i> Store No: <strong style="color: black;">386997</strong></span>
+                        <button class="copy-btn" onclick="window.copyToClipboard('386997')"><i class="fa-regular fa-copy"></i></button>
+                    </li>
+                    <li><i class="fa-solid fa-square-check"></i> Enter amount: Ksh <span id="summaryPayAmount">12,000</span></li>
+                </ul>
+            </div>
+
+            <button class="main-confirm-btn" onclick="window.showValidateModal()">Confirm Payments</button>
+            <button class="cancel-text-btn" style="margin-top: 15px;" onclick="document.getElementById('payment-page-overlay').style.display='none'">Go Back</button>
+        </div>
+
+        <div id="validate-modal" class="modal-overlay" style="display:none; z-index: 3000; background: rgba(0,0,0,0.6);">
+            <div class="validate-box">
+                <div class="shield-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3>Validate Payment</h3>
+                <p>Please enter the M-PESA Transaction Code (e.g. SBM8...) received in your SMS.</p>
+                <input type="text" id="mpesaCodeInput" placeholder="ENTER TRANSACTION CODE">
+                <button id="payBtn" class="verify-btn" onclick="window.verifyPayment()">Verify Payment</button>
+                <button class="cancel-text-btn" onclick="document.getElementById('validate-modal').style.display='none'">Cancel</button>
+            </div>
         </div>
     </div>
+
 
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-content">

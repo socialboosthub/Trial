@@ -129,6 +129,9 @@ window.updateQty = (change) => {
     display.innerText = newVal;
 };
 
+
+
+
 window.initiateOrder = () => {
     if (!auth.currentUser) return alert("Please login first.");
     
@@ -145,6 +148,72 @@ window.initiateOrder = () => {
     if (quantity > currentStock) {
         return alert(`⚠️ Not enough stock!\n\nAvailable: ${currentStock} Trays\nYou want: ${quantity} Trays\n\nPlease reduce quantity.`);
     }
+
+    // CALCULATE WALLET DEDUCTION
+    const cartTotal = quantity * currentEggPrice;
+    let walletDeduction = 0;
+    let mpesaRequired = cartTotal;
+
+    if (userWalletBalance > 0) {
+        walletDeduction = Math.min(cartTotal, userWalletBalance);
+        mpesaRequired = cartTotal - walletDeduction;
+    }
+
+    // Save state globally so Verify function knows what to expect
+    window.currentOrderState = {
+        quantity: quantity,
+        cartTotal: cartTotal,
+        walletDeduction: walletDeduction,
+        mpesaRequired: mpesaRequired
+    };
+
+    // Update UI Elements for the NEW Design
+    document.getElementById('summaryQty').innerText = quantity;
+    document.getElementById('summaryPrice').innerText = currentEggPrice.toLocaleString();
+    document.getElementById('summaryTotal').innerText = cartTotal.toLocaleString();
+    
+    if (walletDeduction > 0) {
+        document.getElementById('summaryWallet').style.display = 'block';
+        document.getElementById('summaryWalletUsed').innerText = walletDeduction.toLocaleString();
+    } else {
+        document.getElementById('summaryWallet').style.display = 'none';
+    }
+
+    document.getElementById('summaryPayAmount').innerText = mpesaRequired.toLocaleString();
+    document.getElementById('mpesaCodeInput').value = "";
+    
+    // Show the new payment full page
+    document.getElementById('payment-page-overlay').style.display = 'flex';
+
+    // If wallet covers the entire cost, skip Mpesa Code logic
+    const payBtn = document.getElementById('payBtn');
+    if (mpesaRequired === 0) {
+        document.getElementById('mpesaCodeInput').style.display = 'none';
+        payBtn.innerText = "Complete Order (Paid by Wallet)";
+        payBtn.onclick = window.processWalletOnlyOrder;
+    } else {
+        document.getElementById('mpesaCodeInput').style.display = 'block';
+        payBtn.innerText = "Verify Payment";
+        payBtn.onclick = window.verifyPayment;
+    }
+};
+
+// ADD THESE HELPER FUNCTIONS right below window.initiateOrder
+
+// Function to copy text from the buttons
+window.copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        alert("Copied: " + text);
+    }).catch(err => {
+        console.error('Could not copy text: ', err);
+    });
+};
+
+// Function to open the Validate Modal when "Confirm Payments" is clicked
+window.showValidateModal = () => {
+    document.getElementById('validate-modal').style.display = 'flex';
+};
+
 
     // CALCULATE WALLET DEDUCTION
     const cartTotal = quantity * currentEggPrice;
@@ -239,7 +308,9 @@ window.processWalletOnlyOrder = async () => {
 
         await batch.commit();
 
-        document.getElementById('mpesa-modal').style.display = 'none';
+        document.getElementById('payment-page-overlay').style.display = 'none';
+document.getElementById('validate-modal').style.display = 'none';
+
         btn.disabled = false;
         await createNotification(`Order Success! Code: ${deliveryCode}`);
         alert(`✅ Order Paid Fully from Wallet!\n\nDELIVERY CODE: ${deliveryCode}`);
@@ -338,7 +409,9 @@ window.verifyPayment = async () => {
 
                     await batch.commit();
 
-                    document.getElementById('mpesa-modal').style.display = 'none';
+                    document.getElementById('payment-page-overlay').style.display = 'none';
+document.getElementById('validate-modal').style.display = 'none';
+
                     resetBtn();
                     await createNotification(`Order Success! Code: ${deliveryCode}`);
 
