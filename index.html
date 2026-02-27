@@ -42,35 +42,47 @@
     </div>
 
     <div id="mpesa-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div style="text-align:center; margin-bottom:15px;">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/15/M-PESA_LOGO-01.svg/1200px-M-PESA_LOGO-01.svg.png" style="height:40px;" alt="M-Pesa">
-            </div>
-            <h3>Payment Required</h3>
+    <div class="modal-content" style="max-width: 350px;">
+        <h3 style="margin-bottom: 10px;">Confirm Payments</h3>
+        
+        <div class="payment-summary" style="background: #f9f9f9; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #eee;">
+            <p style="font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 5px;">Order Summary</p>
+            <div class="pay-row"><span>Number of Trays:</span> <strong id="summaryQty">30</strong></div>
+            <div class="pay-row"><span>Price per Tray:</span> <strong>Ksh <span id="summaryUnitPrice">400</span></strong></div>
+            <div id="summaryWalletRow" class="pay-row wallet-deduction" style="display:none;"><span>Wallet Discount:</span> <strong>-Ksh <span id="summaryWallet">0</span></strong></div>
+            <div class="pay-row total"><span>Total Amount:</span> <strong style="color: #D32F2F;">Ksh <span id="summaryTotal">12,000</span></strong></div>
+        </div>
+
+        <div style="background: #FFF8E1; border: 1px dashed #FFB300; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+            <p style="font-weight: bold; color: #FF8F00; margin-bottom: 10px;"><i class="fa-solid fa-circle-info"></i> How To Pay</p>
+            <p style="font-size: 12px; margin-bottom: 8px;">1. Open M-PESA > Withdraw Cash > From Agent</p>
             
-            <div style="background:#f9f9f9; padding:15px; border-radius:10px; font-size:13px; margin-bottom:15px; border:1px dashed #ccc;">
-                <p style="margin:0 0 5px; color:#555;">Order Total: <strong>Ksh <span id="mpesaOrderTotal">0</span></strong></p>
-                <p id="walletDeductionText" style="margin:0 0 5px; color:#2E7D32; display:none;">Wallet Applied: <strong>-Ksh <span id="mpesaWalletUsed">0</span></strong></p>
-                <hr style="border: 0; border-top: 1px solid #ddd; margin: 8px 0;">
-                <p style="margin:0 0 5px;"><strong>1. Go to M-Pesa > Lipa na M-Pesa</strong></p>
-                <p style="margin:0 0 5px;"><strong>2. Buy Goods / Paybill</strong></p>
-                <p style="margin:0 0 5px;">Till: <strong>123456</strong> (Agent Name)</p>
-                <p style="margin:0; font-size: 15px;">Amount to Pay: <strong style="color: #D32F2F;">Ksh <span id="mpesaTotalDisplay">0</span></strong></p>
-                <p style="margin:5px 0 0; font-size:10px; color:#666;">*Any excess amount paid will be saved to your Wallet.</p>
-            </div>
-            
-            <div class="input-group">
-                <label>Enter M-Pesa Transaction Code</label>
-                <input type="text" id="mpesaCodeInput" placeholder="e.g. QGH5..." style="text-transform:uppercase; letter-spacing: 2px; font-weight:bold; text-align:center;">
-                <small style="color:#666; font-size:10px; display:block; margin-top:5px;">Wait for the SMS, then copy the code here.</small>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #fff; padding: 8px; border-radius: 8px;">
+                <span style="font-size: 13px;">Agent No: <strong>7172200</strong></span>
+                <button onclick="window.copyToClipboard('7172200', this)" style="background: #FFB300; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">COPY</button>
             </div>
 
-            <button id="payBtn" class="save-btn" style="width:100%; background:#4CAF50; color:white;" onclick="window.verifyPayment()">
-                Verify Payment
-            </button>
-            <button class="cancel-btn" style="width:100%; margin-top:10px;" onclick="document.getElementById('mpesa-modal').style.display='none'">Cancel</button>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #fff; padding: 8px; border-radius: 8px;">
+                <span style="font-size: 13px;">Store No: <strong>386997</strong></span>
+                <button onclick="window.copyToClipboard('386997', this)" style="background: #FFB300; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">COPY</button>
+            </div>
+
+            <p style="font-size: 13px;">Enter amount: <strong id="amountToPayInstruction">Ksh 12,000</strong></p>
         </div>
+
+        <div class="input-group">
+            <label style="font-weight: bold;">Validate Payment</label>
+            <input type="text" id="mpesaCodeInput" placeholder="ENTER TRANSACTION CODE" style="text-transform:uppercase; text-align:center; font-weight:bold; letter-spacing: 2px;">
+            <small style="color: #666; font-size: 10px;">Enter the code (e.g. SBM8...) received in your SMS.</small>
+        </div>
+
+        <button id="payBtn" class="save-btn" style="width:100%; background:#4CAF50; color:white; padding: 15px; font-size: 16px;" onclick="window.verifyPayment()">
+            Verify Payment
+        </button>
+        <button class="cancel-btn" style="width:100%; margin-top:10px; border: none; background: transparent; color: #F44336;" onclick="document.getElementById('mpesa-modal').style.display='none'">Cancel</button>
     </div>
+    </div>
+    
 
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-content">
