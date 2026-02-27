@@ -466,3 +466,23 @@ input:checked + .slider:before { transform: translateX(20px); }
     text-align: center;
 }
 
+
+/* Payment Summary Layout */
+.pay-row { 
+    display: flex; 
+    justify-content: space-between; 
+    margin-bottom: 5px; 
+    font-size: 13px; 
+}
+.pay-row.total { 
+    font-weight: 700; 
+    border-top: 1px dashed #ccc; 
+    padding-top: 8px; 
+    margin-top: 5px; 
+    font-size: 15px; 
+}
+.pay-row.wallet-deduction { 
+    color: #2E7D32; 
+    font-weight: 600; 
+}
+
