@@ -194,50 +194,7 @@ window.copyToClipboard = (text, btn) => {
     });
 };
 
-    // CALCULATE WALLET DEDUCTION
-    const cartTotal = quantity * currentEggPrice;
-    let walletDeduction = 0;
-    let mpesaRequired = cartTotal;
-
-    if (userWalletBalance > 0) {
-        walletDeduction = Math.min(cartTotal, userWalletBalance);
-        mpesaRequired = cartTotal - walletDeduction;
-    }
-
-    // Save state globally so Verify function knows what to expect
-    window.currentOrderState = {
-        quantity: quantity,
-        cartTotal: cartTotal,
-        walletDeduction: walletDeduction,
-        mpesaRequired: mpesaRequired
-    };
-
-    // Update UI Elements
-    document.getElementById('mpesaOrderTotal').innerText = cartTotal.toLocaleString();
-    
-    if (walletDeduction > 0) {
-        document.getElementById('walletDeductionText').style.display = 'block';
-        document.getElementById('mpesaWalletUsed').innerText = walletDeduction.toLocaleString();
-    } else {
-        document.getElementById('walletDeductionText').style.display = 'none';
-    }
-
-    document.getElementById('mpesaTotalDisplay').innerText = mpesaRequired.toLocaleString();
-    document.getElementById('mpesaCodeInput').value = "";
-    document.getElementById('mpesa-modal').style.display = 'flex';
-
-    // If wallet covers the entire cost, skip Mpesa Code!
-    const payBtn = document.getElementById('payBtn');
-    if (mpesaRequired === 0) {
-        document.getElementById('mpesaCodeInput').parentElement.style.display = 'none';
-        payBtn.innerText = "Complete Order (Paid by Wallet)";
-        payBtn.onclick = window.processWalletOnlyOrder;
-    } else {
-        document.getElementById('mpesaCodeInput').parentElement.style.display = 'block';
-        payBtn.innerText = "Verify Payment";
-        payBtn.onclick = window.verifyPayment;
-    }
-};
+  
 
 function generateOrderCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
