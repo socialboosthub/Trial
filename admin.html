@@ -8,26 +8,76 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
 
-    /* UPDATED ADMIN SECURITY OVERLAY STYLES */
+
+    /* ===== SECURITY OVERLAY ===== */
 #security-overlay {
-    position: fixed; 
-    top: 0; 
-    left: 0; 
-    width: 100%; 
-    height: 100vh; /* Changed to 100vh to ensure it fills the screen */
-    background: #ffffff; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
     z-index: 99999;
-    display: flex; 
-    flex-direction: column; 
-    align-items: center; 
-    justify-content: center; /* This pulls everything to the vertical center */
-    padding: 20px; 
-    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.security-box { 
-    width: 100%; 
-    max-width: 350px; 
+.security-box {
+    width: 100%;
+    max-width: 380px;
+    padding: 25px;
+    text-align: center;
+}
+
+.sec-step {
+    display: none;
+}
+
+.sec-step.active {
+    display: block;
+}
+
+.sec-input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    margin: 10px 0 15px 0;
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.sec-input:focus {
+    border-color: #0d47a1;
+    outline: none;
+}
+
+.sec-btn {
+    background: #0d47a1;
+    color: white;
+    font-weight: bold;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.sec-btn:hover {
+    background: #08306b;
+}
+
+.error-msg {
+    color: #F44336;
+    font-size: 13px;
+    margin-top: 10px;
+    min-height: 20px;
+    font-weight: 600;
+}
+        
+        
     /* Added margin-top to visually balance the icon and text */
     margin-bottom: 5vh; 
 }
@@ -126,7 +176,7 @@
             </div>
         </div>
 
-        <div class="admin-card" style="margin-bottom: 20px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #eee;">
+        <div id="walletSection" class="admin-card" style="margin-bottom: 20px; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: 1px solid #eee;">
             <h3><i class="fa-solid fa-wallet color-green"></i> Wallet Refunds</h3>
             <p style="font-size: 12px; color: #666; margin-bottom: 10px;">Enter a user's exact User ID to check or refund their wallet balance.</p>
             
@@ -263,19 +313,24 @@
         };
 
         // --- DASHBOARD FUNCTIONS ---
-        function initDashboard(role) {
-            const isSuper = (role === "SUPER");
-            loadOrders(isSuper);
 
-            if(isSuper) {
-                loadPrice();
-                document.getElementById('manualEntrySection').style.display = 'block'; 
-            } else {
-                document.getElementById('priceEditor').style.display = 'none';
-                document.getElementById('manualEntrySection').style.display = 'none'; 
-                document.getElementById('dashboardTitle').innerText = "Delivery Dashboard";
-            }
+        function initDashboard(role) {
+    const isSuper = (role === "SUPER");
+
+    loadOrders(isSuper);
+
+    if (isSuper) {
+        loadPrice();
+        document.getElementById('manualEntrySection').style.display = 'block';
+        document.getElementById('walletSection').style.display = 'block';
+    } else {
+        document.getElementById('priceEditor').style.display = 'none';
+        document.getElementById('manualEntrySection').style.display = 'none';
+        document.getElementById('walletSection').style.display = 'none';
+        document.getElementById('dashboardTitle').innerText = "Delivery Dashboard";
+    }
         }
+        
 
         async function loadPrice() {
             const docSnap = await getDoc(doc(db, "config", "pricing"));
