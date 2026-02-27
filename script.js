@@ -129,6 +129,7 @@ window.updateQty = (change) => {
     display.innerText = newVal;
 };
 
+// --- Updated Order Initiation to match PDF ---
 window.initiateOrder = () => {
     if (!auth.currentUser) return alert("Please login first.");
     
@@ -141,20 +142,121 @@ window.initiateOrder = () => {
     }
     
     const quantity = parseInt(document.getElementById('shopQty').innerText);
-
     if (quantity > currentStock) {
-        return alert(`⚠️ Not enough stock!\n\nAvailable: ${currentStock} Trays\nYou want: ${quantity} Trays\n\nPlease reduce quantity.`);
+        return alert(`⚠️ Not enough stock! Available: ${currentStock}`);
     }
 
-    // CALCULATE WALLET DEDUCTION
     const cartTotal = quantity * currentEggPrice;
-    let walletDeduction = 0;
-    let mpesaRequired = cartTotal;
+    let walletDeduction = userWalletBalance > 0 ? Math.min(cartTotal, userWalletBalance) : 0;
+    let mpesaRequired = cartTotal - walletDeduction;
 
-    if (userWalletBalance > 0) {
-        walletDeduction = Math.min(cartTotal, userWalletBalance);
-        mpesaRequired = cartTotal - walletDeduction;
+    window.currentOrderState = { quantity, cartTotal, walletDeduction, mpesaRequired };
+
+    // Update the Summary UI
+    document.getElementById('summaryQty').innerText = quantity;
+    document.getElementById('summaryUnitPrice').innerText = currentEggPrice.toLocaleString();
+    document.getElementById('summaryTotal').innerText = mpesaRequired.toLocaleString();
+    document.getElementById('amountToPayInstruction').innerText = "Ksh " + mpesaRequired.toLocaleString();
+
+    const walletRow = document.getElementById('summaryWalletRow');
+    if (walletDeduction > 0) {
+        walletRow.style.display = 'flex';
+        document.getElementById('summaryWallet').innerText = walletDeduction.toLocaleString();
+    } else {
+        walletRow.style.display = 'none';
     }
+
+    document.getElementById('mpesaCodeInput').value = "";
+    document.getElementById('mpesa-modal').style.display = 'flex';
+
+    const payBtn = document.getElementById('payBtn');
+    if (mpesaRequired === 0) {
+        payBtn.innerText = "Complete Order (Paid by Wallet)";
+        payBtn.onclick = window.processWalletOnlyOrder;
+    } else {
+        payBtn.innerText = "Verify Payment";
+        payBtn.onclick = window.verifyPayment;
+    }
+};
+
+// Add this function at the very bottom of script.js
+window.copyToClipboard = (text, btn) => {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = "COPIED!";
+        btn.style.background = "#4CAF50";
+        btn.style.color = "white";
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "#FFB300";
+            btn.style.color = "black";
+        }, 2000);
+    });
+};// --- Updated Order Initiation to match PDF ---
+window.initiateOrder = () => {
+    if (!auth.currentUser) return alert("Please login first.");
+    
+    if (!userLocation || !userLocation.address) {
+        if(confirm("⚠️ Delivery Location Missing!\n\nPlease set your location to continue.")) {
+            window.showPage('settings', document.querySelectorAll('.nav-item')[3]);
+            setTimeout(() => window.initLocationFlow(), 500);
+        }
+        return;
+    }
+    
+    const quantity = parseInt(document.getElementById('shopQty').innerText);
+    if (quantity > currentStock) {
+        return alert(`⚠️ Not enough stock! Available: ${currentStock}`);
+    }
+
+    const cartTotal = quantity * currentEggPrice;
+    let walletDeduction = userWalletBalance > 0 ? Math.min(cartTotal, userWalletBalance) : 0;
+    let mpesaRequired = cartTotal - walletDeduction;
+
+    window.currentOrderState = { quantity, cartTotal, walletDeduction, mpesaRequired };
+
+    // Update the Summary UI
+    document.getElementById('summaryQty').innerText = quantity;
+    document.getElementById('summaryUnitPrice').innerText = currentEggPrice.toLocaleString();
+    document.getElementById('summaryTotal').innerText = mpesaRequired.toLocaleString();
+    document.getElementById('amountToPayInstruction').innerText = "Ksh " + mpesaRequired.toLocaleString();
+
+    const walletRow = document.getElementById('summaryWalletRow');
+    if (walletDeduction > 0) {
+        walletRow.style.display = 'flex';
+        document.getElementById('summaryWallet').innerText = walletDeduction.toLocaleString();
+    } else {
+        walletRow.style.display = 'none';
+    }
+
+    document.getElementById('mpesaCodeInput').value = "";
+    document.getElementById('mpesa-modal').style.display = 'flex';
+
+    const payBtn = document.getElementById('payBtn');
+    if (mpesaRequired === 0) {
+        payBtn.innerText = "Complete Order (Paid by Wallet)";
+        payBtn.onclick = window.processWalletOnlyOrder;
+    } else {
+        payBtn.innerText = "Verify Payment";
+        payBtn.onclick = window.verifyPayment;
+    }
+};
+
+// Add this function at the very bottom of script.js
+window.copyToClipboard = (text, btn) => {
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = "COPIED!";
+        btn.style.background = "#4CAF50";
+        btn.style.color = "white";
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.background = "#FFB300";
+            btn.style.color = "black";
+        }, 2000);
+    });
+};
+
 
     // Save state globally so Verify function knows what to expect
     window.currentOrderState = {
