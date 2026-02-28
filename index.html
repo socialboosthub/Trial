@@ -13,6 +13,9 @@
             width: 20px; height: 20px; background: rgba(255, 255, 255, 0.05);
             border-radius: 50%; z-index: 10000; cursor: pointer;
         }
+        /* Trick to show Ksh 0 when JS hides the container */
+        #emptyWalletDisplay { display: none; }
+        #walletContainer[style*="none"] ~ #emptyWalletDisplay { display: block; }
     </style>
     <script type="module" src="script.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -158,12 +161,6 @@
             <h3 id="usernameDisplay">Egg Wholesaler</h3>
         </div>
         <div class="header-actions">
-            <div class="wallet-badge" id="walletContainer" style="display:none;" onclick="window.openTopUpModal()">
-
-                <i class="fa-solid fa-wallet"></i>
-                <span id="walletDisplay">0</span>
-            </div>
-
             <div class="icon-btn" onclick="window.showPage('notifications-page', null)">
                 <i class="fa-regular fa-bell"></i>
                 <div id="notifBadge" class="dot-badge" style="display:none;"></div>
@@ -183,6 +180,20 @@
             </div>
             <div class="hero-img">🐓</div>
         </div>
+
+        <div class="wallet-card-home" onclick="window.openTopUpModal()" style="cursor: pointer; display: flex; flex-direction: column;">
+            <div class="wallet-label">My Wallet Balance</div>
+            
+            <div id="walletContainer" style="display: none; flex-direction: column;">
+                <div class="wallet-amount" id="walletDisplay">Ksh 0</div>
+            </div>
+            <div class="wallet-amount" id="emptyWalletDisplay">Ksh 0</div>
+            
+            <div style="margin-top: 5px;">
+                <span class="wallet-note"><i class="fa-solid fa-plus"></i> Tap to Top Up</span>
+            </div>
+        </div>
+
         <div class="stats-row">
             <div class="stat-card highlight">
                 <i class="fa-solid fa-basket-shopping"></i>
@@ -249,17 +260,13 @@
         <h2 class="page-title" data-i18n="navSettings">Settings</h2>
         <div class="settings-section">
             <div class="settings-header">Account</div>
+            
             <div class="setting-item clickable" onclick="window.openProfileModal()">
                 <div class="icon-wrap color-blue"><i class="fa-solid fa-user-pen"></i></div>
                 <div class="text">Edit Profile</div>
-                <div class="setting-item clickable" onclick="window.openTopUpModal()">
-    <div class="icon-wrap color-green"><i class="fa-solid fa-wallet"></i></div>
-    <div class="text">Top Up Wallet</div>
-    <i class="fa-solid fa-chevron-right arrow"></i>
-</div>
-
                 <i class="fa-solid fa-chevron-right arrow"></i>
             </div>
+            
             <div class="setting-item clickable" onclick="window.initLocationFlow()">
                 <div class="icon-wrap color-green"><i class="fa-solid fa-location-dot"></i></div>
                 <div class="text">
@@ -304,4 +311,3 @@
 
 </body>
 </html>
-
