@@ -179,7 +179,6 @@ window.initiateOrder = () => {
     }
 };
 
-// Add this function at the very bottom of script.js
 window.copyToClipboard = (text, btn) => {
     navigator.clipboard.writeText(text).then(() => {
         const originalText = btn.innerText;
@@ -194,8 +193,6 @@ window.copyToClipboard = (text, btn) => {
     });
 };
 
-  
-
 function generateOrderCode() {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
     let result = '';
@@ -204,6 +201,96 @@ function generateOrderCode() {
     }
     return result;
 }
+
+// --- NEW TOP-UP MODAL & LOGIC ---
+window.openTopUpModal = () => {
+    if (!auth.currentUser) return alert("Please login first to top up your wallet.");
+    document.getElementById('topupCodeInput').value = "";
+    document.getElementById('topup-modal').style.display = 'flex';
+};
+
+window.processTopUp = async () => {
+    const codeInput = document.getElementById('topupCodeInput').value.toUpperCase().trim();
+    const btn = document.getElementById('topupBtn');
+
+    if (codeInput.length < 10) return alert("Please enter a valid 10-character M-Pesa code.");
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying Funds...`;
+
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    const pollLoop = setInterval(async () => {
+        attempts++;
+        try {
+            const mpesaRef = doc(db, "mpesa_payments", codeInput);
+            const docSnap = await getDoc(mpesaRef);
+
+            if (docSnap.exists()) {
+                clearInterval(pollLoop);
+                const data = docSnap.data();
+
+                if (data.used) {
+                    alert("❌ This code was already used.");
+                    resetBtn();
+                    return;
+                }
+
+                const paidAmount = Number(String(data.amount).replace(/,/g, ''));
+                if (isNaN(paidAmount) || paidAmount <= 0) {
+                    alert("❌ Invalid amount detected.");
+                    resetBtn();
+                    return;
+                }
+
+                const newWalletBalance = userWalletBalance + paidAmount;
+
+                try {
+                    const batch = writeBatch(db);
+                    
+                    // Update User Wallet
+                    const userRef = doc(db, "users", auth.currentUser.uid);
+                    batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
+
+                    // Mark Code as Used
+                    batch.update(mpesaRef, {
+                        used: true,
+                        usedBy: auth.currentUser.uid,
+                        claimedAt: new Date(),
+                        purpose: "Wallet Top Up"
+                    });
+
+                    await batch.commit();
+
+                    document.getElementById('topup-modal').style.display = 'none';
+                    resetBtn();
+                    await createNotification(`Wallet Topped Up! Added Ksh ${paidAmount.toLocaleString()}`);
+                    alert(`✅ Success! Ksh ${paidAmount.toLocaleString()} has been added to your wallet.`);
+
+                } catch (batchError) {
+                    console.error(batchError);
+                    alert("Top up failed. Please check console for details.");
+                    resetBtn();
+                }
+
+            } else if (attempts >= maxAttempts) {
+                clearInterval(pollLoop);
+                alert("❌ Code not found in system yet. Please check your SMS and try again.");
+                resetBtn();
+            }
+        } catch (err) {
+            clearInterval(pollLoop);
+            alert("Connection Error. Please check your internet.");
+            resetBtn();
+        }
+    }, 3000);
+
+    function resetBtn() {
+        btn.disabled = false;
+        btn.innerHTML = "Verify & Add Funds";
+    }
+};
 
 window.processWalletOnlyOrder = async () => {
     const btn = document.getElementById('payBtn');
@@ -731,3 +818,4 @@ window.generateReceiptPDF = (orderData) => {
 };
 
 window.ordersDataMap = {};
+
