@@ -77,7 +77,12 @@ function listenToUserWallet() {
     onSnapshot(doc(db, "users", auth.currentUser.uid), (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
-            userWalletBalance = data.walletBalance || 0;
+            // Change this in script.js inside listenToUserWallet():
+if (userWalletBalance >= 0) { // Changed from > 0
+    walletContainer.style.display = 'flex';
+    walletDisplay.innerText = "Ksh " + userWalletBalance.toLocaleString();
+}
+
             
             const walletContainer = document.getElementById('walletContainer');
             const walletDisplay = document.getElementById('walletDisplay');
