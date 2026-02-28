@@ -20,6 +20,7 @@ const storage = getStorage(app);
 const provider = new GoogleAuthProvider();
 
 let userLocation = null;
+let userPhone = null; // 🔥 ADDED: Track user phone number
 let currentEggPrice = 385; 
 let currentStock = 0; 
 
@@ -50,7 +51,7 @@ onAuthStateChanged(auth, async (user) => {
         fetchLivePrice(); 
         listenToOrders();
         listenToNotifications(); 
-        listenToUserWallet(); // Start watching the wallet!
+        listenToUserWallet(); 
     } else {
         if(overlay) overlay.style.display = 'flex';
         document.body.classList.add('not-logged-in');
@@ -129,7 +130,7 @@ window.updateQty = (change) => {
     display.innerText = newVal;
 };
 
-// --- Updated Order Initiation to match PDF ---
+// --- Updated Order Initiation ---
 window.initiateOrder = () => {
     if (!auth.currentUser) return alert("Please login first.");
     
@@ -139,6 +140,17 @@ window.initiateOrder = () => {
             setTimeout(() => window.initLocationFlow(), 500);
         }
         return;
+    }
+
+    // 🔥 NEW: Mandatory Phone Number Check
+    if (!userPhone) {
+        let phoneInput = prompt("⚠️ Phone Number Required!\n\nPlease enter your phone number (e.g., 0712345678) so we can contact you for delivery:");
+        if (!phoneInput || phoneInput.trim().length < 9) {
+            return alert("❌ A valid phone number is required to place an order.");
+        }
+        userPhone = phoneInput.trim();
+        // Save to Firestore so they don't have to type it again next time
+        setDoc(doc(db, "users", auth.currentUser.uid), { phone: userPhone }, { merge: true });
     }
     
     const quantity = parseInt(document.getElementById('shopQty').innerText);
@@ -298,7 +310,7 @@ window.processWalletOnlyOrder = async () => {
     btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...`;
 
     const state = window.currentOrderState;
-    const newWalletBalance = userWalletBalance - state.cartTotal; // Fully paid via wallet
+    const newWalletBalance = userWalletBalance - state.cartTotal; 
 
     try {
         const batch = writeBatch(db);
@@ -308,6 +320,7 @@ window.processWalletOnlyOrder = async () => {
         batch.set(newOrderRef, {
             userId: auth.currentUser.uid,
             userName: auth.currentUser.displayName || "Customer",
+            customerPhone: userPhone, // 🔥 ADDED: Attaches phone to the order
             item: "Tray of 30", 
             unitPrice: currentEggPrice, 
             quantity: state.quantity, 
@@ -379,7 +392,6 @@ window.verifyPayment = async () => {
 
                 const paidAmount = Number(String(data.amount).replace(/,/g, ''));
 
-                // WALLET LOGIC: Allow Overpaying, but block Underpaying
                 if (paidAmount < state.mpesaRequired) {
                     alert(`❌ PAYMENT ERROR: UNDERPAYMENT!\n\n` +
                           `Required M-Pesa: Ksh ${state.mpesaRequired}\n` +
@@ -389,7 +401,6 @@ window.verifyPayment = async () => {
                     return;
                 }
 
-                // Calculate Overpayment to add to wallet
                 const overpayment = paidAmount - state.mpesaRequired;
                 const newWalletBalance = userWalletBalance - state.walletDeduction + overpayment;
 
@@ -401,6 +412,7 @@ window.verifyPayment = async () => {
                     batch.set(newOrderRef, {
                         userId: auth.currentUser.uid,
                         userName: auth.currentUser.displayName || "Customer",
+                        customerPhone: userPhone, // 🔥 ADDED: Attaches phone to the order
                         item: "Tray of 30", 
                         unitPrice: currentEggPrice, 
                         quantity: state.quantity, 
@@ -420,11 +432,9 @@ window.verifyPayment = async () => {
                         claimedAt: new Date()
                     });
 
-                    // Deduct Stock
                     const stockRef = doc(db, "config", "pricing");
                     batch.update(stockRef, { currentStock: currentStock - state.quantity });
 
-                    // Update Wallet
                     const userRef = doc(db, "users", auth.currentUser.uid);
                     batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
 
@@ -531,6 +541,12 @@ async function loadUserSettings() {
         const userDoc = await getDoc(doc(db, "users", auth.currentUser.uid));
         if (userDoc.exists()) {
             const data = userDoc.data();
+            
+            // 🔥 ADDED: Load phone if they already saved it
+            if (data.phone) {
+                userPhone = data.phone;
+            }
+
             if (data.theme === 'dark') {
                 document.body.setAttribute('data-theme', 'dark');
                 if(document.getElementById('themeToggle')) document.getElementById('themeToggle').checked = true;
@@ -762,7 +778,8 @@ window.generateReceiptPDF = (orderData) => {
     doc.setFont("helvetica", "normal");
     doc.text(orderData.userName || "Valued Customer", 14, startY + 6);
     doc.text(orderData.address || "Mombasa, Kenya", 14, startY + 12);
-    doc.text(`Tel: ${orderData.mpesaNumber || "N/A"}`, 14, startY + 18);
+    // 🔥 Added customer phone to the PDF if it exists
+    doc.text(`Tel: ${orderData.customerPhone || orderData.mpesaNumber || "N/A"}`, 14, startY + 18);
 
     doc.setFont("helvetica", "bold");
     doc.text("RECEIPT DETAILS:", 140, startY);
