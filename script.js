@@ -77,12 +77,7 @@ function listenToUserWallet() {
     onSnapshot(doc(db, "users", auth.currentUser.uid), (docSnap) => {
         if (docSnap.exists()) {
             const data = docSnap.data();
-            // Change this in script.js inside listenToUserWallet():
-if (userWalletBalance >= 0) { // Changed from > 0
-    walletContainer.style.display = 'flex';
-    walletDisplay.innerText = "Ksh " + userWalletBalance.toLocaleString();
-}
-
+            userWalletBalance = data.walletBalance || 0;
             
             const walletContainer = document.getElementById('walletContainer');
             const walletDisplay = document.getElementById('walletDisplay');
@@ -736,95 +731,3 @@ window.generateReceiptPDF = (orderData) => {
 };
 
 window.ordersDataMap = {};
-
-// --- TOP UP WALLET LOGIC ---
-
-// Open the modal
-window.openTopUpModal = () => {
-    document.getElementById('topupCodeInput').value = "";
-    document.getElementById('topup-modal').style.display = 'flex';
-};
-
-// Process the M-Pesa Code for Top Up
-window.processTopUp = async () => {
-    const codeInput = document.getElementById('topupCodeInput').value.toUpperCase().trim();
-    const btn = document.getElementById('topupBtn');
-    
-    if(codeInput.length < 10) return alert("Please enter a valid 10-character M-Pesa code.");
-
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...`;
-
-    let attempts = 0;
-    const maxAttempts = 10; 
-
-    // Poll the database just like the order verification
-    const pollLoop = setInterval(async () => {
-        attempts++;
-        try {
-            const mpesaRef = doc(db, "mpesa_payments", codeInput);
-            const docSnap = await getDoc(mpesaRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                clearInterval(pollLoop);
-                
-                if (data.used) {
-                    alert("❌ This code has already been used.");
-                    resetTopupBtn();
-                    return;
-                }
-
-                // Get amount and calculate new balance
-                const paidAmount = Number(String(data.amount).replace(/,/g, ''));
-                const newWalletBalance = userWalletBalance + paidAmount;
-
-                try {
-                    const batch = writeBatch(db);
-
-                    // 1. Mark M-Pesa code as used
-                    batch.update(mpesaRef, { 
-                        used: true, 
-                        usedBy: auth.currentUser.uid,
-                        claimedAt: new Date(),
-                        purpose: "Wallet Top Up"
-                    });
-
-                    // 2. Add money to user's wallet
-                    const userRef = doc(db, "users", auth.currentUser.uid);
-                    batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
-
-                    await batch.commit();
-
-                    document.getElementById('topup-modal').style.display = 'none';
-                    resetTopupBtn();
-                    
-                    // Trigger your existing notification system!
-                    await createNotification(`Wallet Topped Up! Added Ksh ${paidAmount.toLocaleString()}`);
-
-                    alert(`🎉 Success! Ksh ${paidAmount.toLocaleString()} has been added to your wallet.`);
-
-                } catch (batchError) {
-                    console.error(batchError);
-                    alert("Top up failed. Please check your connection.");
-                    resetTopupBtn();
-                }
-
-            } else if (attempts >= maxAttempts) {
-                clearInterval(pollLoop);
-                alert("❌ Code not found in system yet. If you just sent the money, wait a few seconds and try again.");
-                resetTopupBtn();
-            }
-        } catch (err) {
-            clearInterval(pollLoop);
-            alert("Connection Error. Please check your internet.");
-            resetTopupBtn();
-        }
-    }, 3000); // Checks every 3 seconds
-
-    function resetTopupBtn() {
-        btn.disabled = false;
-        btn.innerHTML = "Verify & Add Funds";
-    }
-};
-
