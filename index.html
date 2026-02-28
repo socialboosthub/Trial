@@ -82,8 +82,42 @@
         <button class="cancel-btn" style="width:100%; margin-top:10px; border: none; background: transparent; color: #F44336;" onclick="document.getElementById('mpesa-modal').style.display='none'">Cancel</button>
     </div>
     </div>
-    
 
+    
+       <div id="topup-modal" class="modal-overlay">
+        <div class="modal-content" style="max-width: 350px;">
+            <h3 style="margin-bottom: 10px;">Top Up Wallet</h3>
+            
+            <div style="background: #E8F5E9; border: 1px dashed #4CAF50; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                <p style="font-weight: bold; color: #2E7D32; margin-bottom: 10px;"><i class="fa-solid fa-wallet"></i> How To Top Up</p>
+                <p style="font-size: 12px; margin-bottom: 8px;">Send any amount via M-PESA to our agent:</p>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #fff; padding: 8px; border-radius: 8px;">
+                    <span style="font-size: 13px;">Agent No: <strong>7172200</strong></span>
+                    <button onclick="window.copyToClipboard('7172200', this)" style="background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">COPY</button>
+                </div>
+                
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #fff; padding: 8px; border-radius: 8px;">
+                    <span style="font-size: 13px;">Store No: <strong>386997</strong></span>
+                    <button onclick="window.copyToClipboard('386997', this)" style="background: #4CAF50; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 11px; font-weight: bold; cursor: pointer;">COPY</button>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label style="font-weight: bold;">Enter M-Pesa Code</label>
+                <input type="text" id="topupCodeInput" placeholder="ENTER TRANSACTION CODE" style="text-transform:uppercase; text-align:center; font-weight:bold; letter-spacing: 2px;">
+                <small style="color: #666; font-size: 10px;">Enter the code (e.g. SBM8...) you received.</small>
+            </div>
+
+            <button id="topupBtn" class="save-btn" style="width:100%; background:#4CAF50; color:white; padding: 15px; font-size: 16px;" onclick="window.processTopUp()">
+                Verify & Add Funds
+            </button>
+            <button class="cancel-btn" style="width:100%; margin-top:10px; border: none; background: transparent; color: #F44336;" onclick="document.getElementById('topup-modal').style.display='none'">Cancel</button>
+        </div>
+    </div>
+
+
+    
     <div id="profile-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Edit Profile</h3>
@@ -124,7 +158,8 @@
             <h3 id="usernameDisplay">Egg Wholesaler</h3>
         </div>
         <div class="header-actions">
-            <div class="wallet-badge" id="walletContainer" style="display:none;">
+            <div class="wallet-badge" id="walletContainer" style="display:none;" onclick="window.openTopUpModal()">
+
                 <i class="fa-solid fa-wallet"></i>
                 <span id="walletDisplay">0</span>
             </div>
