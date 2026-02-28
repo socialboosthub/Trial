@@ -290,7 +290,7 @@ window.verifyPayment = async () => {
                     return;
                 }
 
-                const paidAmount = Number(data.amount);
+                const paidAmount = Number(String(data.amount).replace(/,/g, ''));
 
                 // WALLET LOGIC: Allow Overpaying, but block Underpaying
                 if (paidAmount < state.mpesaRequired) {
