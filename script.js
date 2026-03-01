@@ -218,257 +218,98 @@ window.openTopUpModal = () => {
     document.getElementById('topup-modal').style.display = 'flex';
 };
 
+
+
+
+
+// --- SECURE TOP UP CALL ---
 window.processTopUp = async () => {
     const codeInput = document.getElementById('topupCodeInput').value.toUpperCase().trim();
     const btn = document.getElementById('topupBtn');
-
     if (codeInput.length < 10) return alert("Please enter a valid 10-character M-Pesa code.");
 
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying Funds...`;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...`;
 
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    const pollLoop = setInterval(async () => {
-        attempts++;
-        try {
-            const mpesaRef = doc(db, "mpesa_payments", codeInput);
-            const docSnap = await getDoc(mpesaRef);
-
-            if (docSnap.exists()) {
-                clearInterval(pollLoop);
-                const data = docSnap.data();
-
-                if (data.used) {
-                    alert("❌ This code was already used.");
-                    resetBtn();
-                    return;
-                }
-
-                const paidAmount = Number(String(data.amount).replace(/,/g, ''));
-                if (isNaN(paidAmount) || paidAmount <= 0) {
-                    alert("❌ Invalid amount detected.");
-                    resetBtn();
-                    return;
-                }
-
-                const newWalletBalance = userWalletBalance + paidAmount;
-
-                try {
-                    const batch = writeBatch(db);
-                    
-                    const userRef = doc(db, "users", auth.currentUser.uid);
-                    batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
-
-                    batch.update(mpesaRef, {
-                        used: true,
-                        usedBy: auth.currentUser.uid,
-                        claimedAt: new Date(),
-                        purpose: "Wallet Top Up"
-                    });
-
-                    await batch.commit();
-
-                    document.getElementById('topup-modal').style.display = 'none';
-                    resetBtn();
-                    await createNotification(`Wallet Topped Up! Added Ksh ${paidAmount.toLocaleString()}`);
-                    alert(`✅ Success! Ksh ${paidAmount.toLocaleString()} has been added to your wallet.`);
-
-                } catch (batchError) {
-                    console.error(batchError);
-                    alert("Top up failed. Please check console for details.");
-                    resetBtn();
-                }
-
-            } else if (attempts >= maxAttempts) {
-                clearInterval(pollLoop);
-                alert("❌ Code not found in system yet. Please check your SMS and try again.");
-                resetBtn();
-            }
-        } catch (err) {
-            clearInterval(pollLoop);
-            alert("Connection Error. Please check your internet.");
-            resetBtn();
+    try {
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch('/api/topup', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ mpesaCode: codeInput })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('topup-modal').style.display = 'none';
+            alert(data.message);
+        } else {
+            alert("❌ " + data.error);
         }
-    }, 3000);
-
-    function resetBtn() {
+    } catch (err) {
+        alert("Connection Error. Please check your internet.");
+    } finally {
         btn.disabled = false;
         btn.innerHTML = "Verify & Add Funds";
     }
 };
 
-window.processWalletOnlyOrder = async () => {
-    const btn = document.getElementById('payBtn');
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...`;
-
-    const state = window.currentOrderState;
-    const newWalletBalance = userWalletBalance - state.cartTotal; 
+// --- SECURE CHECKOUT CALLS ---
+async function sendSecureCheckoutRequest(payload, btnElement, defaultBtnText) {
+    btnElement.disabled = true;
+    btnElement.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...`;
 
     try {
-        const batch = writeBatch(db);
-        const newOrderRef = doc(collection(db, "orders"));
-        const deliveryCode = generateOrderCode();
-        
-        batch.set(newOrderRef, {
-            userId: auth.currentUser.uid,
-            userName: auth.currentUser.displayName || "Customer",
-            customerPhone: userPhone, 
-            item: "Tray of 30", 
-            unitPrice: currentEggPrice, 
-            quantity: state.quantity, 
-            totalPrice: state.cartTotal,
-            status: 'Pending',
-            mpesaNumber: "Paid via Wallet", 
-            mpesaCode: "WALLET",
-            address: userLocation.address,
-            locationCoords: userLocation,
-            deliveryCode: deliveryCode, 
-            createdAt: new Date()
+        const token = await auth.currentUser.getIdToken();
+        const response = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
         });
-
-        const stockRef = doc(db, "config", "pricing");
-        batch.update(stockRef, { currentStock: currentStock - state.quantity });
         
-        const userRef = doc(db, "users", auth.currentUser.uid);
-        batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
-
-        await batch.commit();
-
-        document.getElementById('mpesa-modal').style.display = 'none';
-        btn.disabled = false;
-        await createNotification(`Order Success! Code: ${deliveryCode}`);
-        alert(`✅ Order Paid Fully from Wallet!\n\nDELIVERY CODE: ${deliveryCode}`);
-        
-        window.showPage('orders', document.querySelectorAll('.nav-item')[2]);
-        generateWhatsAppLink(state.quantity, state.cartTotal, userLocation.address, deliveryCode);
-
-    } catch(e) {
-        console.error(e);
+        const data = await response.json();
+        if (data.success) {
+            document.getElementById('mpesa-modal').style.display = 'none';
+            alert(data.message);
+            window.showPage('orders', document.querySelectorAll('.nav-item')[2]);
+            generateWhatsAppLink(payload.orderState.quantity, payload.orderState.cartTotal, payload.userLocation.address, data.deliveryCode);
+        } else {
+            alert("❌ " + data.error);
+        }
+    } catch (err) {
         alert("Order failed. Please check your connection.");
-        btn.disabled = false;
-        btn.innerText = "Complete Order (Paid by Wallet)";
+    } finally {
+        btnElement.disabled = false;
+        btnElement.innerText = defaultBtnText;
     }
+}
+
+window.processWalletOnlyOrder = async () => {
+    const btn = document.getElementById('payBtn');
+    const payload = { 
+        isWalletOnly: true, orderState: window.currentOrderState, 
+        userPhone, userLocation 
+    };
+    await sendSecureCheckoutRequest(payload, btn, "Complete Order (Paid by Wallet)");
 };
 
 window.verifyPayment = async () => {
     const codeInput = document.getElementById('mpesaCodeInput').value.toUpperCase().trim();
-    const btn = document.getElementById('payBtn');
-    const state = window.currentOrderState;
-    
     if(codeInput.length < 10) return alert("Please enter a valid 10-character M-Pesa code.");
-    if(!state) return alert("Order error. Please close and try again.");
-
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying Amount...`;
-
-    let attempts = 0;
-    const maxAttempts = 10; 
-
-    const pollLoop = setInterval(async () => {
-        attempts++;
-        try {
-            const mpesaRef = doc(db, "mpesa_payments", codeInput);
-            const docSnap = await getDoc(mpesaRef);
-
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-                clearInterval(pollLoop);
-                
-                if (data.used) {
-                    alert("❌ This code was already used for another order.");
-                    resetBtn();
-                    return;
-                }
-
-                const paidAmount = Number(String(data.amount).replace(/,/g, ''));
-
-                if (paidAmount < state.mpesaRequired) {
-                    alert(`❌ PAYMENT ERROR: UNDERPAYMENT!\n\n` +
-                          `Required M-Pesa: Ksh ${state.mpesaRequired}\n` +
-                          `M-Pesa Sent: Ksh ${paidAmount}\n\n` +
-                          `Please contact support to resolve this.`);
-                    resetBtn();
-                    return;
-                }
-
-                const overpayment = paidAmount - state.mpesaRequired;
-                const newWalletBalance = userWalletBalance - state.walletDeduction + overpayment;
-
-                try {
-                    const batch = writeBatch(db);
-                    const newOrderRef = doc(collection(db, "orders"));
-                    const deliveryCode = generateOrderCode();
-                    
-                    batch.set(newOrderRef, {
-                        userId: auth.currentUser.uid,
-                        userName: auth.currentUser.displayName || "Customer",
-                        customerPhone: userPhone, 
-                        item: "Tray of 30", 
-                        unitPrice: currentEggPrice, 
-                        quantity: state.quantity, 
-                        totalPrice: state.cartTotal,
-                        status: 'Pending',
-                        mpesaNumber: data.phone || "Verified", 
-                        mpesaCode: codeInput,
-                        address: userLocation.address,
-                        locationCoords: userLocation,
-                        deliveryCode: deliveryCode, 
-                        createdAt: new Date()
-                    });
-
-                    batch.update(mpesaRef, { 
-                        used: true, 
-                        usedBy: auth.currentUser.uid,
-                        claimedAt: new Date()
-                    });
-
-                    const stockRef = doc(db, "config", "pricing");
-                    batch.update(stockRef, { currentStock: currentStock - state.quantity });
-
-                    const userRef = doc(db, "users", auth.currentUser.uid);
-                    batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
-
-                    await batch.commit();
-
-                    document.getElementById('mpesa-modal').style.display = 'none';
-                    resetBtn();
-                    await createNotification(`Order Success! Code: ${deliveryCode}`);
-
-                    let successMsg = `✅ Payment Verified!\n\nDELIVERY CODE: ${deliveryCode}`;
-                    if (overpayment > 0) {
-                        successMsg += `\n\n🎉 Ksh ${overpayment} extra has been saved to your wallet for next time!`;
-                    }
-                    alert(successMsg);
-                    
-                    window.showPage('orders', document.querySelectorAll('.nav-item')[2]);
-                    generateWhatsAppLink(state.quantity, state.cartTotal, userLocation.address, deliveryCode);
-
-                } catch (batchError) {
-                    console.error(batchError);
-                    alert("Order failed. Check console for details.");
-                    resetBtn();
-                }
-
-            } else if (attempts >= maxAttempts) {
-                clearInterval(pollLoop);
-                alert("❌ Code not found in system yet.");
-                resetBtn();
-            }
-        } catch (err) {
-            clearInterval(pollLoop);
-            alert("Connection Error.");
-            resetBtn();
-        }
-    }, 3000); 
-
-    function resetBtn() {
-        btn.disabled = false;
-        btn.innerHTML = "Verify Payment";
-    }
+    
+    const btn = document.getElementById('payBtn');
+    const payload = { 
+        isWalletOnly: false, mpesaCode: codeInput, 
+        orderState: window.currentOrderState, userPhone, userLocation 
+    };
+    await sendSecureCheckoutRequest(payload, btn, "Verify Payment");
 };
+
+
+
+
+
+
 
 function generateWhatsAppLink(qty, total, loc, code) {
     const btn = document.querySelector('.whatsapp-float');
