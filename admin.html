@@ -202,80 +202,87 @@
         </div> <h3>Incoming Orders</h3>
         <div id="adminOrdersList">Loading...</div>
     </div> <script type="module">
+
+
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, getDoc, onSnapshot, updateDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBrvdknWfFKdl9Bn8TJRrpWEc2RQDEHZqE",
-            authDomain: "eggshop-702f6.firebaseapp.com",
-            projectId: "eggshop-702f6",
-            storageBucket: "eggshop-702f6.firebasestorage.app",
-            messagingSenderId: "290586261198",
-            appId: "1:290586261198:web:61cd80463c8c2c5f06429f",
-            measurementId: "G-HVJKWCER6S"
-        };
+const firebaseConfig = {
+    apiKey: "AIzaSyBrvdknWfFKdl9Bn8TJRrpWEc2RQDEHZqE",
+    authDomain: "eggshop-702f6.firebaseapp.com",
+    projectId: "eggshop-702f6",
+    storageBucket: "eggshop-702f6.firebasestorage.app",
+    messagingSenderId: "290586261198",
+    appId: "1:290586261198:web:61cd80463c8c2c5f06429f"
+};
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-        // --- CREDENTIALS ---
-        const CREDENTIALS = {
-            "ashrafsquad001@gmail.com": { pass: "Ashraf.3691", role: "SUPER" },
-            "abdulraxmanxamza@gmail.com": { pass: "Ahamza4066", role: "MANAGER" }
-        };
-        const MASTER_CODE = "1357911";
+// REMOVED: Hardcoded passwords. They are now checked by Firebase directly.
+const MASTER_CODE = "1357911";
 
-        let currentEmail = "";
-        let currentRole = "";
+let tempEmail = "";
+let tempPass = "";
 
-        // --- LOGIN LOGIC ---
-        window.checkEmail = () => {
-            const email = document.getElementById('secEmail').value.trim().toLowerCase();
-            const err = document.getElementById('error-display');
-            if(CREDENTIALS[email]) {
-                currentEmail = email;
-                currentRole = CREDENTIALS[email].role;
-                document.getElementById('step-1').classList.remove('active');
-                document.getElementById('step-2').classList.add('active');
-                err.innerText = "";
-            } else { err.innerText = "Gmail is not correct"; }
-        };
+window.checkEmail = () => {
+    const email = document.getElementById('secEmail').value.trim().toLowerCase();
+    if(email) {
+        tempEmail = email;
+        document.getElementById('step-1').classList.remove('active');
+        document.getElementById('step-2').classList.add('active');
+    }
+};
 
-        window.checkPass = () => {
-            const pass = document.getElementById('secPass').value;
-            const err = document.getElementById('error-display');
-            if(pass === CREDENTIALS[currentEmail].pass) {
-                document.getElementById('step-2').classList.remove('active');
-                document.getElementById('step-3').classList.add('active');
-                err.innerText = "";
-            } else { err.innerText = "Wrong password"; }
-        };
+window.checkPass = () => {
+    const pass = document.getElementById('secPass').value;
+    if(pass) {
+        tempPass = pass;
+        document.getElementById('step-2').classList.remove('active');
+        document.getElementById('step-3').classList.add('active');
+    }
+};
 
-        window.checkCode = async () => {
-            const code = document.getElementById('secCode').value;
-            const err = document.getElementById('error-display');
-            const btn = document.getElementById('finalLoginBtn');
+window.checkCode = async () => {
+    const code = document.getElementById('secCode').value;
+    const err = document.getElementById('error-display');
+    const btn = document.getElementById('finalLoginBtn');
 
-            if(code === MASTER_CODE) {
-                try {
-                    btn.innerText = "Authenticating...";
-                    btn.disabled = true;
-                    await signInWithEmailAndPassword(auth, currentEmail, CREDENTIALS[currentEmail].pass);
-                    document.getElementById('security-overlay').style.display = 'none';
-                    document.getElementById('admin-panel').style.display = 'block';
-                    initDashboard(currentRole);
-                } catch (error) {
-                    console.error(error);
-                    err.innerText = "Firebase Error: " + error.code;
-                    btn.innerText = "Login As Admin";
-                    btn.disabled = false;
-                }
-            } else { err.innerText = "Invalid Code"; }
-        };
+    if(code === MASTER_CODE) {
+        try {
+            btn.innerText = "Authenticating securely...";
+            btn.disabled = true;
+            
+            // 1. Authenticate with Firebase (Actual security check)
+            const userCredential = await signInWithEmailAndPassword(auth, tempEmail, tempPass);
+            const uid = userCredential.user.uid;
 
-        window.logoutAdmin = () => signOut(auth).then(() => window.location.reload());
+            // 2. Verify Admin Role in Firestore
+            const adminDoc = await getDoc(doc(db, "admins", uid));
+            if(!adminDoc.exists()) {
+                await signOut(auth);
+                throw new Error("You do not have admin privileges.");
+            }
+
+            const role = adminDoc.data().role;
+            
+            document.getElementById('security-overlay').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            initDashboard(role);
+        } catch (error) {
+            err.innerText = error.message;
+            btn.innerText = "Login As Admin";
+            btn.disabled = false;
+        }
+    } else { err.innerText = "Invalid Master Code"; }
+};
+
+window.logoutAdmin = () => signOut(auth).then(() => window.location.reload());
+
+// Leave all your other dashboard functions (parseAndSavePayment, initDashboard, etc.) down here exactly as they were!
+
 
         // --- MANUAL SAVE LOGIC (Backup) ---
         window.parseAndSavePayment = async () => {
