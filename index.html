@@ -121,26 +121,37 @@
 
 
     
-    <div id="profile-modal" class="modal-overlay">
+
+        <div id="profile-modal" class="modal-overlay">
         <div class="modal-content">
             <h3>Edit Profile</h3>
+            
+            <div class="input-group">
+                <label>Profile ID (Unique)</label>
+                <input type="text" id="editIdInput" readonly style="background-color: #f0f0f0; color: #888; cursor: not-allowed;" title="Your unique account ID cannot be changed.">
+            </div>
+
             <div class="input-group">
                 <label>Full Name</label>
                 <input type="text" id="editNameInput" placeholder="Enter your name">
             </div>
+
             <div class="input-group">
-                <label>Profile Photo</label>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <img id="previewImg" src="" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; display: none; border: 1px solid #ccc;">
-                    <input type="file" id="editPhotoFile" accept="image/*" onchange="window.previewFile()" style="font-size: 12px;">
-                </div>
+                <label>Phone Number</label>
+                <input type="tel" id="editPhoneInput" placeholder="e.g., 0712345678" maxlength="10">
+                <small style="color: #D32F2F; font-size: 11px; font-weight: 600; display: block; margin-top: 5px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Warning: Please use your active WhatsApp/Call number. This is used for your deliveries!
+                </small>
             </div>
+            
             <div class="modal-actions">
                 <button class="cancel-btn" onclick="window.closeProfileModal()">Cancel</button>
                 <button id="saveProfileBtn" class="save-btn" onclick="window.saveProfile()">Save Changes</button>
             </div>
         </div>
     </div>
+
+    
 
     <div id="location-modal" class="modal-overlay">
         <div class="modal-content location-content">
