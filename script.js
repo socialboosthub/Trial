@@ -20,11 +20,11 @@ const storage = getStorage(app);
 const provider = new GoogleAuthProvider();
 
 let userLocation = null;
-let userPhone = null; // Track user phone number
+let userPhone = null; // 🔥 ADDED: Track user phone number
 let currentEggPrice = 385; 
 let currentStock = 0; 
 
-// WALLET STATE
+// 🔥 WALLET STATE
 let userWalletBalance = 0;
 window.currentOrderState = null; 
 
@@ -142,12 +142,14 @@ window.initiateOrder = () => {
         return;
     }
 
+    // 🔥 NEW: Mandatory Phone Number Check
     if (!userPhone) {
         let phoneInput = prompt("⚠️ Phone Number Required!\n\nPlease enter your phone number (e.g., 0712345678) so we can contact you for delivery:");
-        if (!phoneInput || !/^(07|01)\d{8}$/.test(phoneInput.trim())) {
-            return alert("❌ A valid 10-digit phone number starting with 07 or 01 is required.");
+        if (!phoneInput || phoneInput.trim().length < 9) {
+            return alert("❌ A valid phone number is required to place an order.");
         }
         userPhone = phoneInput.trim();
+        // Save to Firestore so they don't have to type it again next time
         setDoc(doc(db, "users", auth.currentUser.uid), { phone: userPhone }, { merge: true });
     }
     
@@ -162,6 +164,7 @@ window.initiateOrder = () => {
 
     window.currentOrderState = { quantity, cartTotal, walletDeduction, mpesaRequired };
 
+    // Update the Summary UI
     document.getElementById('summaryQty').innerText = quantity;
     document.getElementById('summaryUnitPrice').innerText = currentEggPrice.toLocaleString();
     document.getElementById('summaryTotal').innerText = mpesaRequired.toLocaleString();
@@ -218,98 +221,261 @@ window.openTopUpModal = () => {
     document.getElementById('topup-modal').style.display = 'flex';
 };
 
-
-
-
-
-// --- SECURE TOP UP CALL ---
 window.processTopUp = async () => {
     const codeInput = document.getElementById('topupCodeInput').value.toUpperCase().trim();
     const btn = document.getElementById('topupBtn');
+
     if (codeInput.length < 10) return alert("Please enter a valid 10-character M-Pesa code.");
 
     btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying...`;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying Funds...`;
 
-    try {
-        const token = await auth.currentUser.getIdToken();
-        const response = await fetch('/api/topup', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ mpesaCode: codeInput })
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            document.getElementById('topup-modal').style.display = 'none';
-            alert(data.message);
-        } else {
-            alert("❌ " + data.error);
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    const pollLoop = setInterval(async () => {
+        attempts++;
+        try {
+            const mpesaRef = doc(db, "mpesa_payments", codeInput);
+            const docSnap = await getDoc(mpesaRef);
+
+            if (docSnap.exists()) {
+                clearInterval(pollLoop);
+                const data = docSnap.data();
+
+                if (data.used) {
+                    alert("❌ This code was already used.");
+                    resetBtn();
+                    return;
+                }
+
+                const paidAmount = Number(String(data.amount).replace(/,/g, ''));
+                if (isNaN(paidAmount) || paidAmount <= 0) {
+                    alert("❌ Invalid amount detected.");
+                    resetBtn();
+                    return;
+                }
+
+                const newWalletBalance = userWalletBalance + paidAmount;
+
+                try {
+                    const batch = writeBatch(db);
+                    
+                    // Update User Wallet
+                    const userRef = doc(db, "users", auth.currentUser.uid);
+                    batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
+
+                    // Mark Code as Used
+                    batch.update(mpesaRef, {
+                        used: true,
+                        usedBy: auth.currentUser.uid,
+                        claimedAt: new Date(),
+                        purpose: "Wallet Top Up"
+                    });
+
+                    await batch.commit();
+
+                    document.getElementById('topup-modal').style.display = 'none';
+                    resetBtn();
+                    await createNotification(`Wallet Topped Up! Added Ksh ${paidAmount.toLocaleString()}`);
+                    alert(`✅ Success! Ksh ${paidAmount.toLocaleString()} has been added to your wallet.`);
+
+                } catch (batchError) {
+                    console.error(batchError);
+                    alert("Top up failed. Please check console for details.");
+                    resetBtn();
+                }
+
+            } else if (attempts >= maxAttempts) {
+                clearInterval(pollLoop);
+                alert("❌ Code not found in system yet. Please check your SMS and try again.");
+                resetBtn();
+            }
+        } catch (err) {
+            clearInterval(pollLoop);
+            alert("Connection Error. Please check your internet.");
+            resetBtn();
         }
-    } catch (err) {
-        alert("Connection Error. Please check your internet.");
-    } finally {
+    }, 3000);
+
+    function resetBtn() {
         btn.disabled = false;
         btn.innerHTML = "Verify & Add Funds";
     }
 };
 
-// --- SECURE CHECKOUT CALLS ---
-async function sendSecureCheckoutRequest(payload, btnElement, defaultBtnText) {
-    btnElement.disabled = true;
-    btnElement.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...`;
-
-    try {
-        const token = await auth.currentUser.getIdToken();
-        const response = await fetch('/api/checkout', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify(payload)
-        });
-        
-        const data = await response.json();
-        if (data.success) {
-            document.getElementById('mpesa-modal').style.display = 'none';
-            alert(data.message);
-            window.showPage('orders', document.querySelectorAll('.nav-item')[2]);
-            generateWhatsAppLink(payload.orderState.quantity, payload.orderState.cartTotal, payload.userLocation.address, data.deliveryCode);
-        } else {
-            alert("❌ " + data.error);
-        }
-    } catch (err) {
-        alert("Order failed. Please check your connection.");
-    } finally {
-        btnElement.disabled = false;
-        btnElement.innerText = defaultBtnText;
-    }
-}
-
 window.processWalletOnlyOrder = async () => {
     const btn = document.getElementById('payBtn');
-    const payload = { 
-        isWalletOnly: true, orderState: window.currentOrderState, 
-        userPhone, userLocation 
-    };
-    await sendSecureCheckoutRequest(payload, btn, "Complete Order (Paid by Wallet)");
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Processing...`;
+
+    const state = window.currentOrderState;
+    const newWalletBalance = userWalletBalance - state.cartTotal; 
+
+    try {
+        const batch = writeBatch(db);
+        const newOrderRef = doc(collection(db, "orders"));
+        const deliveryCode = generateOrderCode();
+        
+        batch.set(newOrderRef, {
+            userId: auth.currentUser.uid,
+            userName: auth.currentUser.displayName || "Customer",
+            customerPhone: userPhone, // 🔥 ADDED: Attaches phone to the order
+            item: "Tray of 30", 
+            unitPrice: currentEggPrice, 
+            quantity: state.quantity, 
+            totalPrice: state.cartTotal,
+            status: 'Pending',
+            mpesaNumber: "Paid via Wallet", 
+            mpesaCode: "WALLET",
+            address: userLocation.address,
+            locationCoords: userLocation,
+            deliveryCode: deliveryCode, 
+            createdAt: new Date()
+        });
+
+        // Deduct Stock
+        const stockRef = doc(db, "config", "pricing");
+        batch.update(stockRef, { currentStock: currentStock - state.quantity });
+        
+        // Update Wallet Balance
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
+
+        await batch.commit();
+
+        document.getElementById('mpesa-modal').style.display = 'none';
+        btn.disabled = false;
+        await createNotification(`Order Success! Code: ${deliveryCode}`);
+        alert(`✅ Order Paid Fully from Wallet!\n\nDELIVERY CODE: ${deliveryCode}`);
+        
+        window.showPage('orders', document.querySelectorAll('.nav-item')[2]);
+        generateWhatsAppLink(state.quantity, state.cartTotal, userLocation.address, deliveryCode);
+
+    } catch(e) {
+        console.error(e);
+        alert("Order failed. Please check your connection.");
+        btn.disabled = false;
+        btn.innerText = "Complete Order (Paid by Wallet)";
+    }
 };
 
 window.verifyPayment = async () => {
     const codeInput = document.getElementById('mpesaCodeInput').value.toUpperCase().trim();
-    if(codeInput.length < 10) return alert("Please enter a valid 10-character M-Pesa code.");
-    
     const btn = document.getElementById('payBtn');
-    const payload = { 
-        isWalletOnly: false, mpesaCode: codeInput, 
-        orderState: window.currentOrderState, userPhone, userLocation 
-    };
-    await sendSecureCheckoutRequest(payload, btn, "Verify Payment");
+    const state = window.currentOrderState;
+    
+    if(codeInput.length < 10) return alert("Please enter a valid 10-character M-Pesa code.");
+    if(!state) return alert("Order error. Please close and try again.");
+
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Verifying Amount...`;
+
+    let attempts = 0;
+    const maxAttempts = 10; 
+
+    const pollLoop = setInterval(async () => {
+        attempts++;
+        try {
+            const mpesaRef = doc(db, "mpesa_payments", codeInput);
+            const docSnap = await getDoc(mpesaRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                clearInterval(pollLoop);
+                
+                if (data.used) {
+                    alert("❌ This code was already used for another order.");
+                    resetBtn();
+                    return;
+                }
+
+                const paidAmount = Number(String(data.amount).replace(/,/g, ''));
+
+                if (paidAmount < state.mpesaRequired) {
+                    alert(`❌ PAYMENT ERROR: UNDERPAYMENT!\n\n` +
+                          `Required M-Pesa: Ksh ${state.mpesaRequired}\n` +
+                          `M-Pesa Sent: Ksh ${paidAmount}\n\n` +
+                          `Please contact support to resolve this.`);
+                    resetBtn();
+                    return;
+                }
+
+                const overpayment = paidAmount - state.mpesaRequired;
+                const newWalletBalance = userWalletBalance - state.walletDeduction + overpayment;
+
+                try {
+                    const batch = writeBatch(db);
+                    const newOrderRef = doc(collection(db, "orders"));
+                    const deliveryCode = generateOrderCode();
+                    
+                    batch.set(newOrderRef, {
+                        userId: auth.currentUser.uid,
+                        userName: auth.currentUser.displayName || "Customer",
+                        customerPhone: userPhone, // 🔥 ADDED: Attaches phone to the order
+                        item: "Tray of 30", 
+                        unitPrice: currentEggPrice, 
+                        quantity: state.quantity, 
+                        totalPrice: state.cartTotal,
+                        status: 'Pending',
+                        mpesaNumber: data.phone || "Verified", 
+                        mpesaCode: codeInput,
+                        address: userLocation.address,
+                        locationCoords: userLocation,
+                        deliveryCode: deliveryCode, 
+                        createdAt: new Date()
+                    });
+
+                    batch.update(mpesaRef, { 
+                        used: true, 
+                        usedBy: auth.currentUser.uid,
+                        claimedAt: new Date()
+                    });
+
+                    const stockRef = doc(db, "config", "pricing");
+                    batch.update(stockRef, { currentStock: currentStock - state.quantity });
+
+                    const userRef = doc(db, "users", auth.currentUser.uid);
+                    batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
+
+                    await batch.commit();
+
+                    document.getElementById('mpesa-modal').style.display = 'none';
+                    resetBtn();
+                    await createNotification(`Order Success! Code: ${deliveryCode}`);
+
+                    let successMsg = `✅ Payment Verified!\n\nDELIVERY CODE: ${deliveryCode}`;
+                    if (overpayment > 0) {
+                        successMsg += `\n\n🎉 Ksh ${overpayment} extra has been saved to your wallet for next time!`;
+                    }
+                    alert(successMsg);
+                    
+                    window.showPage('orders', document.querySelectorAll('.nav-item')[2]);
+                    generateWhatsAppLink(state.quantity, state.cartTotal, userLocation.address, deliveryCode);
+
+                } catch (batchError) {
+                    console.error(batchError);
+                    alert("Order failed. Check console for details.");
+                    resetBtn();
+                }
+
+            } else if (attempts >= maxAttempts) {
+                clearInterval(pollLoop);
+                alert("❌ Code not found in system yet.");
+                resetBtn();
+            }
+        } catch (err) {
+            clearInterval(pollLoop);
+            alert("Connection Error.");
+            resetBtn();
+        }
+    }, 3000); 
+
+    function resetBtn() {
+        btn.disabled = false;
+        btn.innerHTML = "Verify Payment";
+    }
 };
-
-
-
-
-
-
 
 function generateWhatsAppLink(qty, total, loc, code) {
     const btn = document.querySelector('.whatsapp-float');
@@ -321,50 +487,52 @@ function generateWhatsAppLink(qty, total, loc, code) {
 window.openProfileModal = () => {
     const user = auth.currentUser;
     if(!user) return;
-    document.getElementById('editIdInput').value = user.uid;
     document.getElementById('editNameInput').value = user.displayName || "";
-    document.getElementById('editPhoneInput').value = userPhone || "";
+    document.getElementById('previewImg').style.display = 'none'; 
     document.getElementById('profile-modal').style.display = 'flex';
 };
 
 window.closeProfileModal = () => { document.getElementById('profile-modal').style.display = 'none'; };
 
+window.previewFile = () => {
+    const file = document.getElementById('editPhotoFile').files[0];
+    const preview = document.getElementById('previewImg');
+    if(file){
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+    }
+};
+
 window.saveProfile = async () => {
     const name = document.getElementById('editNameInput').value;
-    const phone = document.getElementById('editPhoneInput').value.trim();
+    const fileInput = document.getElementById('editPhotoFile');
     const saveBtn = document.getElementById('saveProfileBtn');
     
-    if(!name) return alert("Name cannot be empty.");
-
-    // Regex Check: Starts with 07 or 01, followed by 8 digits (total 10 digits)
-    const phoneRegex = /^(07|01)\d{8}$/;
-    if(!phoneRegex.test(phone)) {
-        return alert("❌ Invalid format! Phone number must be exactly 10 digits and start with 07 or 01.");
-    }
+    if(!name) return alert("Name cannot be empty");
 
     saveBtn.innerText = "Saving...";
     saveBtn.disabled = true;
 
     try {
-        await updateProfile(auth.currentUser, { displayName: name });
-        
-        await setDoc(doc(db, "users", auth.currentUser.uid), { 
-            name: name, 
-            phone: phone, 
-            email: auth.currentUser.email 
-        }, { merge: true });
-        
-        userPhone = phone; // update local variable
+        let photoURL = auth.currentUser.photoURL;
+        if(fileInput.files.length > 0) {
+            try {
+                const file = fileInput.files[0];
+                const storageRef = ref(storage, `profile_pics/${auth.currentUser.uid}`);
+                await uploadBytes(storageRef, file);
+                photoURL = await getDownloadURL(storageRef);
+            } catch(photoError) { console.warn("Photo upload failed", photoError); }
+        }
 
+        await updateProfile(auth.currentUser, { displayName: name, photoURL: photoURL });
+        await setDoc(doc(db, "users", auth.currentUser.uid), { name: name, photo: photoURL, email: auth.currentUser.email }, { merge: true });
+        
         document.getElementById('usernameDisplay').innerText = name;
+        if(photoURL) document.getElementById('userPhoto').src = photoURL;
         window.closeProfileModal();
-        alert("Profile Updated Successfully!");
-    } catch(e) { 
-        alert("Error: " + e.message); 
-    } finally { 
-        saveBtn.innerText = "Save Changes"; 
-        saveBtn.disabled = false; 
-    }
+        alert("Profile Updated!");
+    } catch(e) { alert("Error: " + e.message); } 
+    finally { saveBtn.innerText = "Save Changes"; saveBtn.disabled = false; }
 };
 
 async function loadUserSettings() {
@@ -374,6 +542,7 @@ async function loadUserSettings() {
         if (userDoc.exists()) {
             const data = userDoc.data();
             
+            // 🔥 ADDED: Load phone if they already saved it
             if (data.phone) {
                 userPhone = data.phone;
             }
@@ -609,6 +778,7 @@ window.generateReceiptPDF = (orderData) => {
     doc.setFont("helvetica", "normal");
     doc.text(orderData.userName || "Valued Customer", 14, startY + 6);
     doc.text(orderData.address || "Mombasa, Kenya", 14, startY + 12);
+    // 🔥 Added customer phone to the PDF if it exists
     doc.text(`Tel: ${orderData.customerPhone || orderData.mpesaNumber || "N/A"}`, 14, startY + 18);
 
     doc.setFont("helvetica", "bold");
@@ -665,3 +835,4 @@ window.generateReceiptPDF = (orderData) => {
 };
 
 window.ordersDataMap = {};
+
