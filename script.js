@@ -20,11 +20,11 @@ const storage = getStorage(app);
 const provider = new GoogleAuthProvider();
 
 let userLocation = null;
-let userPhone = null; // 🔥 ADDED: Track user phone number
+let userPhone = null; // Track user phone number
 let currentEggPrice = 385; 
 let currentStock = 0; 
 
-// 🔥 WALLET STATE
+// WALLET STATE
 let userWalletBalance = 0;
 window.currentOrderState = null; 
 
@@ -142,14 +142,12 @@ window.initiateOrder = () => {
         return;
     }
 
-    // 🔥 NEW: Mandatory Phone Number Check
     if (!userPhone) {
         let phoneInput = prompt("⚠️ Phone Number Required!\n\nPlease enter your phone number (e.g., 0712345678) so we can contact you for delivery:");
-        if (!phoneInput || phoneInput.trim().length < 9) {
-            return alert("❌ A valid phone number is required to place an order.");
+        if (!phoneInput || !/^(07|01)\d{8}$/.test(phoneInput.trim())) {
+            return alert("❌ A valid 10-digit phone number starting with 07 or 01 is required.");
         }
         userPhone = phoneInput.trim();
-        // Save to Firestore so they don't have to type it again next time
         setDoc(doc(db, "users", auth.currentUser.uid), { phone: userPhone }, { merge: true });
     }
     
@@ -164,7 +162,6 @@ window.initiateOrder = () => {
 
     window.currentOrderState = { quantity, cartTotal, walletDeduction, mpesaRequired };
 
-    // Update the Summary UI
     document.getElementById('summaryQty').innerText = quantity;
     document.getElementById('summaryUnitPrice').innerText = currentEggPrice.toLocaleString();
     document.getElementById('summaryTotal').innerText = mpesaRequired.toLocaleString();
@@ -261,11 +258,9 @@ window.processTopUp = async () => {
                 try {
                     const batch = writeBatch(db);
                     
-                    // Update User Wallet
                     const userRef = doc(db, "users", auth.currentUser.uid);
                     batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
 
-                    // Mark Code as Used
                     batch.update(mpesaRef, {
                         used: true,
                         usedBy: auth.currentUser.uid,
@@ -320,7 +315,7 @@ window.processWalletOnlyOrder = async () => {
         batch.set(newOrderRef, {
             userId: auth.currentUser.uid,
             userName: auth.currentUser.displayName || "Customer",
-            customerPhone: userPhone, // 🔥 ADDED: Attaches phone to the order
+            customerPhone: userPhone, 
             item: "Tray of 30", 
             unitPrice: currentEggPrice, 
             quantity: state.quantity, 
@@ -334,11 +329,9 @@ window.processWalletOnlyOrder = async () => {
             createdAt: new Date()
         });
 
-        // Deduct Stock
         const stockRef = doc(db, "config", "pricing");
         batch.update(stockRef, { currentStock: currentStock - state.quantity });
         
-        // Update Wallet Balance
         const userRef = doc(db, "users", auth.currentUser.uid);
         batch.set(userRef, { walletBalance: newWalletBalance }, { merge: true });
 
@@ -412,7 +405,7 @@ window.verifyPayment = async () => {
                     batch.set(newOrderRef, {
                         userId: auth.currentUser.uid,
                         userName: auth.currentUser.displayName || "Customer",
-                        customerPhone: userPhone, // 🔥 ADDED: Attaches phone to the order
+                        customerPhone: userPhone, 
                         item: "Tray of 30", 
                         unitPrice: currentEggPrice, 
                         quantity: state.quantity, 
@@ -487,52 +480,50 @@ function generateWhatsAppLink(qty, total, loc, code) {
 window.openProfileModal = () => {
     const user = auth.currentUser;
     if(!user) return;
+    document.getElementById('editIdInput').value = user.uid;
     document.getElementById('editNameInput').value = user.displayName || "";
-    document.getElementById('previewImg').style.display = 'none'; 
+    document.getElementById('editPhoneInput').value = userPhone || "";
     document.getElementById('profile-modal').style.display = 'flex';
 };
 
 window.closeProfileModal = () => { document.getElementById('profile-modal').style.display = 'none'; };
 
-window.previewFile = () => {
-    const file = document.getElementById('editPhotoFile').files[0];
-    const preview = document.getElementById('previewImg');
-    if(file){
-        preview.src = URL.createObjectURL(file);
-        preview.style.display = 'block';
-    }
-};
-
 window.saveProfile = async () => {
     const name = document.getElementById('editNameInput').value;
-    const fileInput = document.getElementById('editPhotoFile');
+    const phone = document.getElementById('editPhoneInput').value.trim();
     const saveBtn = document.getElementById('saveProfileBtn');
     
-    if(!name) return alert("Name cannot be empty");
+    if(!name) return alert("Name cannot be empty.");
+
+    // Regex Check: Starts with 07 or 01, followed by 8 digits (total 10 digits)
+    const phoneRegex = /^(07|01)\d{8}$/;
+    if(!phoneRegex.test(phone)) {
+        return alert("❌ Invalid format! Phone number must be exactly 10 digits and start with 07 or 01.");
+    }
 
     saveBtn.innerText = "Saving...";
     saveBtn.disabled = true;
 
     try {
-        let photoURL = auth.currentUser.photoURL;
-        if(fileInput.files.length > 0) {
-            try {
-                const file = fileInput.files[0];
-                const storageRef = ref(storage, `profile_pics/${auth.currentUser.uid}`);
-                await uploadBytes(storageRef, file);
-                photoURL = await getDownloadURL(storageRef);
-            } catch(photoError) { console.warn("Photo upload failed", photoError); }
-        }
-
-        await updateProfile(auth.currentUser, { displayName: name, photoURL: photoURL });
-        await setDoc(doc(db, "users", auth.currentUser.uid), { name: name, photo: photoURL, email: auth.currentUser.email }, { merge: true });
+        await updateProfile(auth.currentUser, { displayName: name });
         
+        await setDoc(doc(db, "users", auth.currentUser.uid), { 
+            name: name, 
+            phone: phone, 
+            email: auth.currentUser.email 
+        }, { merge: true });
+        
+        userPhone = phone; // update local variable
+
         document.getElementById('usernameDisplay').innerText = name;
-        if(photoURL) document.getElementById('userPhoto').src = photoURL;
         window.closeProfileModal();
-        alert("Profile Updated!");
-    } catch(e) { alert("Error: " + e.message); } 
-    finally { saveBtn.innerText = "Save Changes"; saveBtn.disabled = false; }
+        alert("Profile Updated Successfully!");
+    } catch(e) { 
+        alert("Error: " + e.message); 
+    } finally { 
+        saveBtn.innerText = "Save Changes"; 
+        saveBtn.disabled = false; 
+    }
 };
 
 async function loadUserSettings() {
@@ -542,7 +533,6 @@ async function loadUserSettings() {
         if (userDoc.exists()) {
             const data = userDoc.data();
             
-            // 🔥 ADDED: Load phone if they already saved it
             if (data.phone) {
                 userPhone = data.phone;
             }
@@ -778,7 +768,6 @@ window.generateReceiptPDF = (orderData) => {
     doc.setFont("helvetica", "normal");
     doc.text(orderData.userName || "Valued Customer", 14, startY + 6);
     doc.text(orderData.address || "Mombasa, Kenya", 14, startY + 12);
-    // 🔥 Added customer phone to the PDF if it exists
     doc.text(`Tel: ${orderData.customerPhone || orderData.mpesaNumber || "N/A"}`, 14, startY + 18);
 
     doc.setFont("helvetica", "bold");
@@ -835,4 +824,3 @@ window.generateReceiptPDF = (orderData) => {
 };
 
 window.ordersDataMap = {};
-
